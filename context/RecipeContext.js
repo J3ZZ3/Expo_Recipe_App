@@ -1,5 +1,6 @@
 import React, { createContext, useState, useEffect } from 'react';
 import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export const RecipeContext = createContext();
 
@@ -8,6 +9,24 @@ export const RecipeProvider = ({ children }) => {
     const [error, setError] = useState(null);
     const [loading, setLoading] = useState(true);
     const [randomRecipe, setRandomRecipe] = useState(null);
+    const [userRecipes, setUserRecipes] = useState([]);
+
+    // Load user recipes from AsyncStorage on mount
+    useEffect(() => {
+        loadUserRecipes();
+        fetchRecipes();
+    }, []);
+
+    const loadUserRecipes = async () => {
+        try {
+            const storedRecipes = await AsyncStorage.getItem('userRecipes');
+            if (storedRecipes) {
+                setUserRecipes(JSON.parse(storedRecipes));
+            }
+        } catch (err) {
+            setError('Failed to load saved recipes');
+        }
+    };
 
     const fetchRecipes = async () => {
         try {
@@ -39,23 +58,67 @@ export const RecipeProvider = ({ children }) => {
     };
 
     const addRecipe = async (newRecipe) => {
-        // Implement the logic to add a recipe
+        try {
+            const recipeWithId = {
+                ...newRecipe,
+                id: Date.now().toString(), // Generate a unique ID
+                createdAt: new Date().toISOString(),
+            };
+
+            const updatedRecipes = [...userRecipes, recipeWithId];
+            setUserRecipes(updatedRecipes);
+            
+            // Save to AsyncStorage
+            await AsyncStorage.setItem('userRecipes', JSON.stringify(updatedRecipes));
+            
+            return recipeWithId;
+        } catch (err) {
+            setError('Failed to add recipe');
+            throw err;
+        }
     };
 
     const updateRecipe = async (id, updatedRecipe) => {
-        // Implement the logic to update a recipe
+        try {
+            const updatedRecipes = userRecipes.map(recipe => 
+                recipe.id === id ? { ...recipe, ...updatedRecipe } : recipe
+            );
+            
+            setUserRecipes(updatedRecipes);
+            await AsyncStorage.setItem('userRecipes', JSON.stringify(updatedRecipes));
+            
+            return updatedRecipes.find(recipe => recipe.id === id);
+        } catch (err) {
+            setError('Failed to update recipe');
+            throw err;
+        }
     };
 
     const deleteRecipe = async (id) => {
-        // Implement the logic to delete a recipe
+        try {
+            const updatedRecipes = userRecipes.filter(recipe => recipe.id !== id);
+            setUserRecipes(updatedRecipes);
+            await AsyncStorage.setItem('userRecipes', JSON.stringify(updatedRecipes));
+        } catch (err) {
+            setError('Failed to delete recipe');
+            throw err;
+        }
     };
 
-    useEffect(() => {
-        fetchRecipes();
-    }, []);
-
     return (
-        <RecipeContext.Provider value={{ recipes, error, loading, fetchRecipeDetails, addRecipe, updateRecipe, deleteRecipe, randomRecipe }}>
+        <RecipeContext.Provider 
+            value={{ 
+                recipes, 
+                error, 
+                loading, 
+                fetchRecipeDetails, 
+                addRecipe, 
+                updateRecipe, 
+                deleteRecipe, 
+                randomRecipe,
+                userRecipes 
+            }}
+        >
             {children}
         </RecipeContext.Provider>
     );

@@ -1,25 +1,18 @@
-import React from 'react';
-import { NavigationContainer } from '@react-navigation/native';
-import { createStackNavigator } from '@react-navigation/stack';
-import { RecipeProvider } from '../context/RecipeContext';
-import RecipeList from '../components/RecipeList';
-import AddRecipe from '../components/AddRecipe';
-import RecipeDetail from '../components/RecipeDetail';
+import React, { useContext } from 'react';
+import { useRouter, Redirect } from 'expo-router';
+import { AuthContext } from '../context/AuthContext';
 
-const Stack = createStackNavigator();
+export default function Index() {
+  const { user, loading } = useContext(AuthContext);
+  const router = useRouter();
 
-const App = () => {
-    return (
-        <RecipeProvider>
-            <NavigationContainer>
-                <Stack.Navigator screenOptions={{ headerShown: false }}>
-                    <Stack.Screen name="RecipeList" component={RecipeList} />
-                    <Stack.Screen name="AddRecipe" component={AddRecipe} />
-                    <Stack.Screen name="RecipeDetail" component={RecipeDetail} />
-                </Stack.Navigator>
-            </NavigationContainer>
-        </RecipeProvider>
-    );
-};
+  if (loading) {
+    return null; // Or a loading spinner
+  }
 
-export default App;
+  if (!user) {
+    return <Redirect href="/login" />;
+  }
+
+  return <Redirect href="/recipe-list" />;
+}

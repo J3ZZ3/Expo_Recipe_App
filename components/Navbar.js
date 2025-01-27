@@ -1,13 +1,19 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons'; // Import Ionicons for the profile icon
+import { AuthContext } from '../context/AuthContext';
 
 const Navbar = ({ onProfilePress }) => {
+    const { signOut } = useContext(AuthContext);
+
     return (
         <View style={styles.container}>
             <Text style={styles.logo}>Recipe Hub</Text>
             <TouchableOpacity onPress={onProfilePress}>
-                <Ionicons name="person-circle" size={50} color="white" />
+                <Ionicons name="person-outline" size={24} color="white" />
+            </TouchableOpacity>
+            <TouchableOpacity onPress={signOut}>
+                <Ionicons name="log-out-outline" size={24} color="white" />
             </TouchableOpacity>
         </View>
     );

@@ -9,10 +9,12 @@ import {
   ScrollView,
   ImageBackground,
 } from "react-native";
+import { useRouter } from 'expo-router';
 import { RecipeContext } from "../context/RecipeContext";
 import Navbar from './Navbar';
 
-const RecipeList = ({ navigation }) => {
+const RecipeList = () => {
+  const router = useRouter();
   const { recipes, error, loading, randomRecipe } = useContext(RecipeContext);
 
   if (loading) {
@@ -26,9 +28,10 @@ const RecipeList = ({ navigation }) => {
   const renderRecipeItem = (item) => (
     <TouchableOpacity
       style={styles.card}
-      onPress={() =>
-        navigation.navigate("RecipeDetail", { recipeId: item.idMeal })
-      }
+      onPress={() => router.push({
+        pathname: "/recipe-detail",
+        params: { recipeId: item.idMeal }
+      })}
     >
       <Image source={{ uri: item.strMealThumb }} style={styles.image} />
     </TouchableOpacity>
@@ -40,7 +43,7 @@ const RecipeList = ({ navigation }) => {
       style={styles.background}
     >
       <ScrollView style={styles.container}>
-        <Navbar onProfilePress={() => navigation.navigate('Profile')} />
+        <Navbar onProfilePress={() => router.push("/profile")} />
         {error && <Text style={styles.errorText}>{error}</Text>}
 
         <Text style={styles.sectionTitle}>Recommended Recipes</Text>
@@ -57,9 +60,10 @@ const RecipeList = ({ navigation }) => {
             <Text style={styles.sectionTitle}>Recipe of the Week</Text>
             <TouchableOpacity
               style={styles.banner}
-              onPress={() =>
-                navigation.navigate("RecipeDetail", { recipeId: randomRecipe.idMeal })
-              }
+              onPress={() => router.push({
+                pathname: "/recipe-detail",
+                params: { recipeId: randomRecipe.idMeal }
+              })}
             >
               <Image source={{ uri: randomRecipe.strMealThumb }} style={styles.bannerImage} />
             </TouchableOpacity>

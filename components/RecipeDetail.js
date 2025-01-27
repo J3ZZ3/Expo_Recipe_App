@@ -1,10 +1,11 @@
 import React, { useEffect, useState, useContext } from 'react';
 import { View, Text, StyleSheet, Image, Linking, ScrollView, TouchableOpacity } from 'react-native';
+import { useLocalSearchParams } from 'expo-router';
 import { RecipeContext } from '../context/RecipeContext';
 import { Ionicons } from '@expo/vector-icons'; // Import the Ionicons icon set
 
-const RecipeDetail = ({ route }) => {
-    const { recipeId } = route.params; // Get the recipe ID from the route params
+const RecipeDetail = () => {
+    const { recipeId } = useLocalSearchParams();
     const { fetchRecipeDetails } = useContext(RecipeContext);
     const [recipe, setRecipe] = useState(null);
 
