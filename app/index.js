@@ -5,6 +5,7 @@ import { RecipeProvider } from '../context/RecipeContext';
 import RecipeList from '../components/RecipeList';
 import AddRecipe from '../components/AddRecipe';
 import RecipeDetail from '../components/RecipeDetail';
+import Explore from '../components/Explore';
 
 const Stack = createStackNavigator();
 
@@ -16,6 +17,7 @@ const App = () => {
                     <Stack.Screen name="RecipeList" component={RecipeList} />
                     <Stack.Screen name="AddRecipe" component={AddRecipe} />
                     <Stack.Screen name="RecipeDetail" component={RecipeDetail} />
+                    <Stack.Screen name="Explore" component={Explore} />
                 </Stack.Navigator>
             </NavigationContainer>
         </RecipeProvider>

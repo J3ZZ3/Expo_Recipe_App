@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   ScrollView,
   ImageBackground,
+  ActivityIndicator,
 } from "react-native";
 import { RecipeContext } from "../context/RecipeContext";
 import Navbar from './Navbar';
@@ -16,12 +17,27 @@ const RecipeList = ({ navigation }) => {
   const { recipes, error, loading, randomRecipe } = useContext(RecipeContext);
 
   if (loading) {
-    return <Text>Loading...</Text>;
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#FF4D00" />
+        <Text style={styles.loadingText}>Loading recipes...</Text>
+      </View>
+    );
   }
 
-  const recommendedRecipes = recipes.slice(0, 10);
-  const recentRecipes = recipes.slice(10, 20);
-  const regionalRecipes = recipes.slice(20, 30);
+  if (error) {
+    return (
+      <View style={styles.errorContainer}>
+        <Text style={styles.errorText}>{error}</Text>
+        <TouchableOpacity 
+          style={styles.retryButton}
+          onPress={() => navigation.replace('RecipeList')}
+        >
+          <Text style={styles.retryButtonText}>Retry</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
   const renderRecipeItem = (item) => (
     <TouchableOpacity
@@ -31,6 +47,7 @@ const RecipeList = ({ navigation }) => {
       }
     >
       <Image source={{ uri: item.strMealThumb }} style={styles.image} />
+      <Text style={styles.cardTitle}>{item.strMeal}</Text>
     </TouchableOpacity>
   );
 
@@ -41,48 +58,62 @@ const RecipeList = ({ navigation }) => {
     >
       <ScrollView style={styles.container}>
         <Navbar onProfilePress={() => navigation.navigate('Profile')} />
-        {error && <Text style={styles.errorText}>{error}</Text>}
+        
+        <TouchableOpacity 
+          style={styles.exploreButton}
+          onPress={() => navigation.navigate('Explore')}
+        >
+          <Text style={styles.exploreButtonText}>Explore All Recipes</Text>
+        </TouchableOpacity>
 
-        <Text style={styles.sectionTitle}>Recommended Recipes</Text>
-        <FlatList
-          data={recommendedRecipes}
-          keyExtractor={(item) => item.idMeal}
-          renderItem={({ item }) => renderRecipeItem(item)}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-        />
-
-        {randomRecipe && (
+        {recipes.length > 0 ? (
           <>
-            <Text style={styles.sectionTitle}>Recipe of the Week</Text>
-            <TouchableOpacity
-              style={styles.banner}
-              onPress={() =>
-                navigation.navigate("RecipeDetail", { recipeId: randomRecipe.idMeal })
-              }
-            >
-              <Image source={{ uri: randomRecipe.strMealThumb }} style={styles.bannerImage} />
-            </TouchableOpacity>
+            <Text style={styles.sectionTitle}>Recommended Recipes</Text>
+            <FlatList
+              data={recipes.slice(0, 10)}
+              keyExtractor={(item) => item.idMeal}
+              renderItem={({ item }) => renderRecipeItem(item)}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+            />
+
+            {randomRecipe && (
+              <>
+                <Text style={styles.sectionTitle}>Recipe of the Week</Text>
+                <TouchableOpacity
+                  style={styles.banner}
+                  onPress={() =>
+                    navigation.navigate("RecipeDetail", { recipeId: randomRecipe.idMeal })
+                  }
+                >
+                  <Image source={{ uri: randomRecipe.strMealThumb }} style={styles.bannerImage} />
+                  <Text style={styles.bannerTitle}>{randomRecipe.strMeal}</Text>
+                </TouchableOpacity>
+              </>
+            )}
+
+            <Text style={styles.sectionTitle}>Recent Recipes</Text>
+            <FlatList
+              data={recipes.slice(10, 20)}
+              keyExtractor={(item) => item.idMeal}
+              renderItem={({ item }) => renderRecipeItem(item)}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+            />
+
+            <Text style={styles.sectionTitle}>Regional Recipes</Text>
+            <FlatList
+              data={recipes.slice(20, 30)}
+              keyExtractor={(item) => item.idMeal}
+              renderItem={({ item }) => renderRecipeItem(item)}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+            />
           </>
+        ) : (
+          <Text style={styles.noRecipesText}>No recipes available</Text>
         )}
-
-        <Text style={styles.sectionTitle}>Recent Recipes</Text>
-        <FlatList
-          data={recentRecipes}
-          keyExtractor={(item) => item.idMeal}
-          renderItem={({ item }) => renderRecipeItem(item)}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-        />
-
-        <Text style={styles.sectionTitle}>Regional Recipes</Text>
-        <FlatList
-          data={regionalRecipes}
-          keyExtractor={(item) => item.idMeal}
-          renderItem={({ item }) => renderRecipeItem(item)}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-        />
+        
         <View style={styles.space} />
       </ScrollView>
     </ImageBackground>
@@ -113,13 +144,13 @@ const styles = StyleSheet.create({
     flex: 1,
     margin: 10,
     borderRadius: 10,
-    backgroundColor: "#f9c2ff",
+    backgroundColor: "transparent",
     alignItems: "center",
     elevation: 3,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 2,
+    shadowOpacity: 0,
+    shadowRadius: 2
   },
   image: {
     width: 120,
@@ -131,21 +162,78 @@ const styles = StyleSheet.create({
     marginVertical: 20,
     borderRadius: 10,
     overflow: "hidden",
-    backgroundColor: "#f9c2ff",
+    backgroundColor: "transparent",
     alignItems: "center",
   },
   bannerImage: {
     width: "100%",
-    height: 150,
+    height: 200,
+    borderRadius: 10,
   },
   bannerTitle: {
     fontSize: 24,
     fontWeight: "bold",
     padding: 10,
     textAlign: "center",
+    color: "white",
   },
   space: {
     height: 40,
+  },
+  exploreButton: {
+    backgroundColor: '#FF4D00',
+    padding: 12,
+    borderRadius: 20,
+    marginVertical: 10,
+    alignItems: 'center',
+  },
+  exploreButtonText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#fff',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+  },
+  loadingText: {
+    marginTop: 10,
+    color: '#666',
+    fontSize: 16,
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+    backgroundColor: '#fff',
+  },
+  retryButton: {
+    backgroundColor: '#FF4D00',
+    padding: 12,
+    borderRadius: 20,
+    minWidth: 120,
+    alignItems: 'center',
+  },
+  retryButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  noRecipesText: {
+    color: 'white',
+    fontSize: 16,
+    textAlign: 'center',
+    marginTop: 20,
+  },
+  cardTitle: {
+    color: 'white',
+    marginTop: 5,
+    textAlign: 'center',
+    fontSize: 14,
+    fontWeight: '500',
   },
 });
 
