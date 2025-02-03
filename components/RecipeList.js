@@ -12,6 +12,7 @@ import {
 } from "react-native";
 import { RecipeContext } from "../context/RecipeContext";
 import Navbar from './Navbar';
+import { Ionicons } from '@expo/vector-icons';
 
 const RecipeList = ({ navigation }) => {
   const { recipes, error, loading, randomRecipe } = useContext(RecipeContext);
@@ -57,7 +58,7 @@ const RecipeList = ({ navigation }) => {
       style={styles.background}
     >
       <ScrollView style={styles.container}>
-        <Navbar onProfilePress={() => navigation.navigate('Profile')} />
+        <Navbar onProfilePress={() => navigation.navigate('Dashboard')} />
         
         <TouchableOpacity 
           style={styles.exploreButton}
@@ -116,6 +117,12 @@ const RecipeList = ({ navigation }) => {
         
         <View style={styles.space} />
       </ScrollView>
+      <TouchableOpacity 
+        style={styles.fab}
+        onPress={() => navigation.navigate('Dashboard')}
+      >
+        <Ionicons name="grid" size={30} color="white" />
+      </TouchableOpacity>
     </ImageBackground>
   );
 };
@@ -234,6 +241,22 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: 14,
     fontWeight: '500',
+  },
+  fab: {
+    position: 'absolute',
+    right: 20,
+    bottom: 20,
+    backgroundColor: '#FF4D00',
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
   },
 });
 

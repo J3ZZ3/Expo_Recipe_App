@@ -72,7 +72,7 @@ const Explore = ({ navigation }) => {
             style={styles.background}
         >
             <View style={styles.container}>
-                <Navbar onProfilePress={() => navigation.navigate('Profile')} />
+                <Navbar onProfilePress={() => navigation.navigate('Dashboard')} />
                 <SearchBar onSearch={handleSearch} />
                 
                 <View style={styles.filterContainer}>

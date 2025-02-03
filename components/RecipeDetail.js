@@ -2,8 +2,9 @@ import React, { useEffect, useState, useContext } from 'react';
 import { View, Text, StyleSheet, Image, Linking, ScrollView, TouchableOpacity } from 'react-native';
 import { RecipeContext } from '../context/RecipeContext';
 import { Ionicons } from '@expo/vector-icons'; // Import the Ionicons icon set
+import Navbar from './Navbar';
 
-const RecipeDetail = ({ route }) => {
+const RecipeDetail = ({ route, navigation }) => {
     const { recipeId } = route.params; // Get the recipe ID from the route params
     const { fetchRecipeDetails } = useContext(RecipeContext);
     const [recipe, setRecipe] = useState(null);
@@ -30,6 +31,7 @@ const RecipeDetail = ({ route }) => {
 
     return (
         <ScrollView style={styles.container}>
+            <Navbar onProfilePress={() => navigation.navigate('Dashboard')} />
             <Image source={{ uri: recipe.strMealThumb }} style={styles.image} />
             <Text style={styles.title}>{recipe.strMeal}</Text>
             <Text style={styles.subtitle}>Ingredients:</Text>
