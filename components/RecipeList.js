@@ -13,16 +13,19 @@ import {
 import { RecipeContext } from "../context/RecipeContext";
 import Navbar from './Navbar';
 import { Ionicons } from '@expo/vector-icons';
+import LoadingSpinner from './LoadingSpinner';
 
 const RecipeList = ({ navigation }) => {
-  const { recipes, error, loading, randomRecipe } = useContext(RecipeContext);
+  const { recipes, error, loadingStates, randomRecipe } = useContext(RecipeContext);
 
-  if (loading) {
+  if (loadingStates.recipes) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#FF4D00" />
-        <Text style={styles.loadingText}>Loading recipes...</Text>
-      </View>
+      <ImageBackground
+        source={require('../assets/images/background.jpg')}
+        style={styles.background}
+      >
+        <LoadingSpinner message="Loading recipes..." />
+      </ImageBackground>
     );
   }
 
@@ -195,17 +198,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     color: '#fff',
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#fff',
-  },
-  loadingText: {
-    marginTop: 10,
-    color: '#666',
-    fontSize: 16,
   },
   errorContainer: {
     flex: 1,

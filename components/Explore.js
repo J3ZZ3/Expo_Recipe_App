@@ -1,4 +1,4 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext, useState, useRef, useEffect } from 'react';
 import {
     View,
     Text,
@@ -8,10 +8,13 @@ import {
     TouchableOpacity,
     ImageBackground,
     ScrollView,
+    Animated,
 } from 'react-native';
 import { RecipeContext } from '../context/RecipeContext';
+import { Ionicons } from '@expo/vector-icons';
 import Navbar from './Navbar';
 import SearchBar from './SearchBar';
+import LoadingSpinner from './LoadingSpinner';
 
 const Explore = ({ navigation }) => {
     const { 
@@ -20,9 +23,34 @@ const Explore = ({ navigation }) => {
         filteredRecipes, 
         categories,
         selectedCategory,
-        setSelectedCategory 
+        setSelectedCategory,
+        loadingStates 
     } = useContext(RecipeContext);
     const [searchTerm, setSearchTerm] = useState('');
+    const sadFaceAnimation = useRef(new Animated.Value(0)).current;
+
+    useEffect(() => {
+        if ((searchTerm || selectedCategory) && filteredRecipes.length === 0) {
+            // Animate the sad face
+            Animated.sequence([
+                Animated.timing(sadFaceAnimation, {
+                    toValue: 1,
+                    duration: 500,
+                    useNativeDriver: true,
+                }),
+                Animated.timing(sadFaceAnimation, {
+                    toValue: 0.8,
+                    duration: 200,
+                    useNativeDriver: true,
+                }),
+                Animated.timing(sadFaceAnimation, {
+                    toValue: 1,
+                    duration: 200,
+                    useNativeDriver: true,
+                }),
+            ]).start();
+        }
+    }, [filteredRecipes, searchTerm, selectedCategory]);
 
     const handleSearch = (term) => {
         setSearchTerm(term);
@@ -64,7 +92,36 @@ const Explore = ({ navigation }) => {
         </TouchableOpacity>
     );
 
+    const renderNoResults = () => (
+        <View style={styles.noResultsContainer}>
+            <Animated.View style={[
+                styles.sadFaceContainer,
+                {
+                    transform: [
+                        { scale: sadFaceAnimation }
+                    ]
+                }
+            ]}>
+                <Ionicons name="sad-outline" size={80} color="white" />
+            </Animated.View>
+            <Text style={styles.noResultsText}>
+                Unfortunately, we couldn't find what you're looking for
+            </Text>
+        </View>
+    );
+
     const displayedRecipes = (searchTerm || selectedCategory) ? filteredRecipes : recipes;
+
+    if (loadingStates.recipes || loadingStates.categories) {
+        return (
+            <ImageBackground
+                source={require('../assets/images/background.jpg')}
+                style={styles.background}
+            >
+                <LoadingSpinner message="Loading recipes and categories..." />
+            </ImageBackground>
+        );
+    }
 
     return (
         <ImageBackground
@@ -93,14 +150,18 @@ const Explore = ({ navigation }) => {
                     {selectedCategory ? selectedCategory : 'All Recipes'}
                 </Text>
                 
-                <FlatList
-                    data={displayedRecipes}
-                    keyExtractor={(item) => item.idMeal}
-                    renderItem={({ item }) => renderRecipeItem(item)}
-                    numColumns={2}
-                    showsVerticalScrollIndicator={false}
-                    contentContainerStyle={styles.recipeGrid}
-                />
+                {(searchTerm || selectedCategory) && filteredRecipes.length === 0 ? (
+                    renderNoResults()
+                ) : (
+                    <FlatList
+                        data={displayedRecipes}
+                        keyExtractor={(item) => item.idMeal}
+                        renderItem={({ item }) => renderRecipeItem(item)}
+                        numColumns={2}
+                        showsVerticalScrollIndicator={false}
+                        contentContainerStyle={styles.recipeGrid}
+                    />
+                )}
             </View>
         </ImageBackground>
     );
@@ -180,6 +241,21 @@ const styles = StyleSheet.create({
     selectedCategoryText: {
         color: '#fff',
         fontWeight: 'bold',
+    },
+    noResultsContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingHorizontal: 20,
+    },
+    sadFaceContainer: {
+        marginBottom: 20,
+    },
+    noResultsText: {
+        color: 'white',
+        fontSize: 18,
+        textAlign: 'center',
+        lineHeight: 24,
     },
 });
 

@@ -11,30 +11,46 @@ export const RecipeProvider = ({ children }) => {
     const [error, setError] = useState(null);
     const [loading, setLoading] = useState(true);
     const [randomRecipe, setRandomRecipe] = useState(null);
+    const [loadingStates, setLoadingStates] = useState({
+        recipes: true,
+        categories: true,
+        details: false,
+        adding: false,
+        updating: false,
+        deleting: false,
+    });
+
+    const updateLoadingState = (key, value) => {
+        setLoadingStates(prev => ({ ...prev, [key]: value }));
+    };
 
     const fetchRecipes = async () => {
         try {
-            setLoading(true);
-            // Fetch initial set of recipes
-            const response = await axios.get('https://www.themealdb.com/api/json/v1/1/search.php?s=');
+            updateLoadingState('recipes', true);
+            updateLoadingState('categories', true);
+
+            // Fetch both recipes and categories in parallel
+            const [recipesResponse, categoriesResponse] = await Promise.all([
+                axios.get('https://www.themealdb.com/api/json/v1/1/search.php?s='),
+                axios.get('https://www.themealdb.com/api/json/v1/1/categories.php')
+            ]);
             
-            if (response.data.meals) {
-                setRecipes(response.data.meals);
-                // Select a random recipe from the fetched meals
-                const randomIndex = Math.floor(Math.random() * response.data.meals.length);
-                setRandomRecipe(response.data.meals[randomIndex]);
+            if (recipesResponse.data.meals) {
+                setRecipes(recipesResponse.data.meals);
+                const randomIndex = Math.floor(Math.random() * recipesResponse.data.meals.length);
+                setRandomRecipe(recipesResponse.data.meals[randomIndex]);
             }
             
-            // Fetch categories separately
-            const categoriesResponse = await axios.get('https://www.themealdb.com/api/json/v1/1/categories.php');
             if (categoriesResponse.data.categories) {
                 setCategories(categoriesResponse.data.categories);
             }
 
         } catch (err) {
-            console.error('Error fetching recipes:', err);
-            setError('Failed to load recipes. Please try again later.');
+            console.error('Error fetching data:', err);
+            setError('Failed to load recipes and categories. Please try again later.');
         } finally {
+            updateLoadingState('recipes', false);
+            updateLoadingState('categories', false);
             setLoading(false);
         }
     };
@@ -64,12 +80,15 @@ export const RecipeProvider = ({ children }) => {
 
     const fetchRecipeDetails = async (id) => {
         try {
+            updateLoadingState('details', true);
             const response = await axios.get(`https://www.themealdb.com/api/json/v1/1/lookup.php?i=${id}`);
             return response.data.meals[0];
         } catch (err) {
             console.error('Error fetching recipe details:', err);
             setError('Failed to load recipe details. Please try again later.');
             throw err;
+        } finally {
+            updateLoadingState('details', false);
         }
     };
 
@@ -105,6 +124,7 @@ export const RecipeProvider = ({ children }) => {
             selectedCategory,
             setSelectedCategory,
             filterRecipes,
+            loadingStates,
         }}>
             {children}
         </RecipeContext.Provider>

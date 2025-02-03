@@ -3,10 +3,11 @@ import { View, Text, StyleSheet, Image, Linking, ScrollView, TouchableOpacity, I
 import { RecipeContext } from '../context/RecipeContext';
 import { Ionicons } from '@expo/vector-icons'; // Import the Ionicons icon set
 import Navbar from './Navbar';
+import LoadingSpinner from './LoadingSpinner';
 
 const RecipeDetail = ({ route, navigation }) => {
     const { recipeId } = route.params; // Get the recipe ID from the route params
-    const { fetchRecipeDetails } = useContext(RecipeContext);
+    const { fetchRecipeDetails, loadingStates } = useContext(RecipeContext);
     const [recipe, setRecipe] = useState(null);
 
     useEffect(() => {
@@ -17,8 +18,15 @@ const RecipeDetail = ({ route, navigation }) => {
         getRecipeDetails();
     }, [recipeId]);
 
-    if (!recipe) {
-        return <Text>Loading...</Text>; // Show loading text while fetching
+    if (loadingStates.details || !recipe) {
+        return (
+            <ImageBackground
+                source={require('../assets/images/background.jpg')}
+                style={styles.background}
+            >
+                <LoadingSpinner message="Loading recipe details..." />
+            </ImageBackground>
+        );
     }
 
     const ingredients = Object.keys(recipe)
@@ -39,6 +47,16 @@ const RecipeDetail = ({ route, navigation }) => {
                 <View style={styles.contentContainer}>
                     <Image source={{ uri: recipe.strMealThumb }} style={styles.image} />
                     <Text style={styles.title}>{recipe.strMeal}</Text>
+
+                    {recipe.strYoutube && (
+                        <TouchableOpacity 
+                            onPress={() => Linking.openURL(recipe.strYoutube)} 
+                            style={styles.linkContainer}
+                        >
+                            <Ionicons name="logo-youtube" size={60} color="#FF0000" />
+                            <Text style={styles.linkText}>Watch on YouTube</Text>
+                        </TouchableOpacity>
+                    )}
                     
                     <View style={styles.section}>
                         <Text style={styles.subtitle}>Ingredients:</Text>
@@ -47,14 +65,7 @@ const RecipeDetail = ({ route, navigation }) => {
                         </View>
                     </View>
 
-                    {recipe.strYoutube && (
-                        <TouchableOpacity 
-                            onPress={() => Linking.openURL(recipe.strYoutube)} 
-                            style={styles.linkContainer}
-                        >
-                            <Ionicons name="logo-youtube" size={60} color="#FF0000" />
-                        </TouchableOpacity>
-                    )}
+                    
 
                     <View style={styles.section}>
                         <Text style={styles.subtitle}>Instructions:</Text>
@@ -124,9 +135,14 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         marginVertical: 15,
-        backgroundColor: 'rgba(255, 255, 255, 0.9)',
+        backgroundColor: 'rgba(0, 0, 0, 0.3)',
         padding: 15,
         borderRadius: 15,
+    },
+    linkText: {
+        color: 'white',
+        fontSize: 16,
+        marginLeft: 10,
     },
 });
 
