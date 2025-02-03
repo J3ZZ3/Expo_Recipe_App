@@ -12,6 +12,8 @@ import RecipeDetail from '../components/RecipeDetail';
 import Explore from '../components/Explore';
 import Dashboard from '../components/Dashboard';
 import LoadingSpinner from '../components/LoadingSpinner';
+import Profile from '../components/Profile';
+import EditProfile from '../components/EditProfile';
 
 const Stack = createStackNavigator();
 
@@ -25,16 +27,16 @@ const NavigationWrapper = () => {
     return (
         <Stack.Navigator screenOptions={{ headerShown: false }}>
             {user ? (
-                // Protected routes
                 <>
                     <Stack.Screen name="RecipeList" component={RecipeList} />
                     <Stack.Screen name="AddRecipe" component={AddRecipe} />
                     <Stack.Screen name="RecipeDetail" component={RecipeDetail} />
                     <Stack.Screen name="Explore" component={Explore} />
                     <Stack.Screen name="Dashboard" component={Dashboard} />
+                    <Stack.Screen name="Profile" component={Profile} />
+                    <Stack.Screen name="EditProfile" component={EditProfile} />
                 </>
             ) : (
-                // Public routes
                 <>
                     <Stack.Screen name="Login" component={Login} />
                     <Stack.Screen name="Signup" component={Signup} />

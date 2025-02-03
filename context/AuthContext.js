@@ -37,6 +37,24 @@ export const AuthProvider = ({ children }) => {
             password,
         });
         if (error) throw error;
+
+        // Create initial profile
+        if (data.user) {
+            const { error: profileError } = await supabase
+                .from('profiles')
+                .insert([
+                    {
+                        id: data.user.id,
+                        email: data.user.email,
+                        username: '',
+                        full_name: '',
+                        contact: '',
+                        updated_at: new Date()
+                    }
+                ]);
+            if (profileError) throw profileError;
+        }
+
         return data;
     };
 
