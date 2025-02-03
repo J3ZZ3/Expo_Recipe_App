@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useContext } from 'react';
-import { View, Text, StyleSheet, Image, Linking, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Image, Linking, ScrollView, TouchableOpacity, ImageBackground } from 'react-native';
 import { RecipeContext } from '../context/RecipeContext';
 import { Ionicons } from '@expo/vector-icons'; // Import the Ionicons icon set
 import Navbar from './Navbar';
@@ -30,68 +30,103 @@ const RecipeDetail = ({ route, navigation }) => {
         ));
 
     return (
-        <ScrollView style={styles.container}>
-            <Navbar onProfilePress={() => navigation.navigate('Dashboard')} />
-            <Image source={{ uri: recipe.strMealThumb }} style={styles.image} />
-            <Text style={styles.title}>{recipe.strMeal}</Text>
-            <Text style={styles.subtitle}>Ingredients:</Text>
-            <View style={styles.ingredientsContainer}>
-                {ingredients}
-            </View>
-            {recipe.strYoutube && (
-                <TouchableOpacity onPress={() => Linking.openURL(recipe.strYoutube)} style={styles.linkContainer}>
-                    <Ionicons name="logo-youtube" size={60} color="red" />
-                </TouchableOpacity>
-            )}
-            <Text style={styles.subtitle}>Instructions:</Text>
-            <Text style={styles.instructions}>{recipe.strInstructions}</Text>
-        </ScrollView>
+        <ImageBackground
+            source={require('../assets/images/background.jpg')}
+            style={styles.background}
+        >
+            <ScrollView style={styles.container}>
+                <Navbar onProfilePress={() => navigation.navigate('Dashboard')} />
+                <View style={styles.contentContainer}>
+                    <Image source={{ uri: recipe.strMealThumb }} style={styles.image} />
+                    <Text style={styles.title}>{recipe.strMeal}</Text>
+                    
+                    <View style={styles.section}>
+                        <Text style={styles.subtitle}>Ingredients:</Text>
+                        <View style={styles.ingredientsContainer}>
+                            {ingredients}
+                        </View>
+                    </View>
+
+                    {recipe.strYoutube && (
+                        <TouchableOpacity 
+                            onPress={() => Linking.openURL(recipe.strYoutube)} 
+                            style={styles.linkContainer}
+                        >
+                            <Ionicons name="logo-youtube" size={60} color="#FF0000" />
+                        </TouchableOpacity>
+                    )}
+
+                    <View style={styles.section}>
+                        <Text style={styles.subtitle}>Instructions:</Text>
+                        <Text style={styles.instructions}>{recipe.strInstructions}</Text>
+                    </View>
+                </View>
+            </ScrollView>
+        </ImageBackground>
     );
 };
 
 const styles = StyleSheet.create({
+    background: {
+        flex: 1,
+        resizeMode: 'cover',
+    },
     container: {
         flex: 1,
+        backgroundColor: 'rgba(56, 48, 48, 0.41)',
+    },
+    contentContainer: {
         padding: 20,
-        backgroundColor: 'rgba(197, 96, 13, 0.67)',
     },
     title: {
-        fontSize: 24,
+        fontSize: 28,
         fontWeight: 'bold',
-        marginBottom: 10,
+        marginBottom: 15,
         textAlign: 'center',
-        marginTop: 10,
+        marginTop: 15,
+        color: 'white',
     },
     image: {
         width: '100%',
-        height: 200,
-        borderRadius: 10,
-        marginBottom: 10,
+        height: 250,
+        borderRadius: 15,
+        marginBottom: 15,
+    },
+    section: {
+        backgroundColor: 'rgba(0, 0, 0, 0.3)',
+        padding: 20,
+        borderRadius: 15,
+        marginBottom: 20,
     },
     instructions: {
         fontSize: 16,
         lineHeight: 24,
-        marginBottom: 40,
+        color: 'white',
     },
     subtitle: {
-        fontSize: 20,
+        fontSize: 22,
         fontWeight: 'bold',
-        marginTop: 10,
+        marginBottom: 15,
+        color: '#FF4D00',
         textAlign: 'center',
-        marginBottom: 10,   
     },
     ingredientsContainer: {
         alignItems: 'center',
     },
     ingredient: {
         fontSize: 16,
+        color: 'white',
+        marginBottom: 8,
         textAlign: 'center',
     },
     linkContainer: {
         flexDirection: 'row',
         justifyContent: 'center',
         alignItems: 'center',
-        marginTop: 10,
+        marginVertical: 15,
+        backgroundColor: 'rgba(255, 255, 255, 0.9)',
+        padding: 15,
+        borderRadius: 15,
     },
 });
 
