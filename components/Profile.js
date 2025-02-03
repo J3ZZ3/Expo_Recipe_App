@@ -6,8 +6,12 @@ import {
     ImageBackground,
     TouchableOpacity,
     ScrollView,
-    ActivityIndicator
+    ActivityIndicator,
+    Image,
 } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
+import * as ImageManipulator from 'expo-image-manipulator';
+import { decode } from 'base64-arraybuffer';
 import { useAuth } from '../hooks/useAuth';
 import { supabase } from '../lib/supabase';
 import Navbar from './Navbar';
@@ -19,13 +23,14 @@ const Profile = ({ navigation }) => {
     const [loading, setLoading] = useState(true);
     const [profile, setProfile] = useState(null);
     const [error, setError] = useState(null);
+    const [uploading, setUploading] = useState(false);
 
     const fetchProfile = async () => {
         try {
             setLoading(true);
             const { data, error } = await supabase
                 .from('profiles')
-                .select('email, username, full_name, contact')
+                .select('email, username, full_name, contact, avatar_url')
                 .eq('id', user?.id)
                 .single();
 
@@ -43,6 +48,7 @@ const Profile = ({ navigation }) => {
                             username: '',
                             full_name: '',
                             contact: '',
+                            avatar_url: '',
                             updated_at: new Date()
                         }
                     ])
@@ -67,10 +73,116 @@ const Profile = ({ navigation }) => {
         }, [])
     );
 
+    const pickImage = async () => {
+        try {
+            // Request permissions first
+            const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+            if (status !== 'granted') {
+                setError('Permission to access media library is required!');
+                return;
+            }
+
+            const result = await ImagePicker.launchImageLibraryAsync({
+                mediaTypes: ImagePicker.MediaTypeOptions.Images,
+                allowsEditing: true,
+                aspect: [1, 1],
+                quality: 1,
+            });
+
+            if (!result.canceled && result.assets[0].uri) {
+                await uploadAvatar(result.assets[0].uri);
+            }
+        } catch (error) {
+            console.error('Error picking image:', error);
+            setError('Error selecting image. Please try again.');
+        }
+    };
+
+    const uploadAvatar = async (uri) => {
+        try {
+            setUploading(true);
+            setError(null);
+
+            // Ensure we have a valid user ID
+            if (!user?.id) {
+                throw new Error('User ID not found');
+            }
+
+            // Compress and resize the image
+            const manipulatedImage = await ImageManipulator.manipulateAsync(
+                uri,
+                [{ resize: { width: 400, height: 400 } }],
+                { 
+                    compress: 0.8,
+                    format: ImageManipulator.SaveFormat.JPEG
+                }
+            );
+
+            // Create a unique file path that includes the user ID and timestamp
+            const timestamp = new Date().getTime();
+            const filePath = `${user.id}_${timestamp}.jpg`;
+
+            // Fetch the image as a blob
+            const response = await fetch(manipulatedImage.uri);
+            const blob = await response.blob();
+
+            // Upload to Supabase Storage
+            const { error: uploadError, data } = await supabase.storage
+                .from('avatars')
+                .upload(filePath, blob, {
+                    contentType: 'image/jpeg',
+                    cacheControl: '3600'
+                });
+
+            if (uploadError) throw uploadError;
+
+            // Get public URL
+            const { data: { publicUrl } } = supabase.storage
+                .from('avatars')
+                .getPublicUrl(filePath);
+
+            // Delete old avatar if exists
+            if (profile?.avatar_url) {
+                try {
+                    const oldFilePath = profile.avatar_url.split('/').pop().split('?')[0];
+                    await supabase.storage
+                        .from('avatars')
+                        .remove([oldFilePath]);
+                } catch (deleteError) {
+                    console.error('Error deleting old avatar:', deleteError);
+                }
+            }
+
+            // Update profile with new avatar URL
+            const { error: updateError } = await supabase
+                .from('profiles')
+                .update({ 
+                    avatar_url: publicUrl,
+                    updated_at: new Date()
+                })
+                .eq('id', user.id);
+
+            if (updateError) throw updateError;
+
+            // Update local state
+            setProfile(prev => ({ ...prev, avatar_url: publicUrl }));
+
+            // Force refresh the image by updating the state
+            const refreshedUrl = `${publicUrl}?t=${timestamp}`;
+            setProfile(prev => ({ ...prev, avatar_url: refreshedUrl }));
+
+        } catch (error) {
+            console.error('Error uploading image:', error);
+            setError('Error uploading image. Please try again.');
+        } finally {
+            setUploading(false);
+        }
+    };
+
     if (loading) {
         return (
             <ImageBackground
-                source={require('../assets/images/background.jpg')}
+                source={require('../assets/images/profile.jpg')}
                 style={styles.background}
             >
                 <View style={styles.loadingContainer}>
@@ -87,12 +199,29 @@ const Profile = ({ navigation }) => {
             style={styles.background}
         >
             <ScrollView style={styles.container}>
-                <Navbar onProfilePress={() => navigation.navigate('Dashboard')} />
+                <Navbar onProfilePress={() => navigation.navigate('Dashboard')} profileUrl={profile?.avatar_url} />
                 
                 <View style={styles.profileContainer}>
-                    <View style={styles.avatarContainer}>
-                        <Ionicons name="person-circle" size={100} color="white" />
-                    </View>
+                    <TouchableOpacity 
+                        style={styles.avatarContainer} 
+                        onPress={pickImage}
+                        disabled={uploading}
+                    >
+                        {uploading ? (
+                            <ActivityIndicator size="large" color="#FF4D00" />
+                        ) : profile?.avatar_url ? (
+                            <View style={styles.avatarWrapper}>
+                                <Image
+                                    source={{ uri: profile.avatar_url }}
+                                    style={styles.avatar}
+                                    resizeMode="cover"
+                                />
+                            </View>
+                        ) : (
+                            <Ionicons name="person-circle" size={100} color="white" />
+                        )}
+                        <Text style={styles.changePhotoText}>Change Photo</Text>
+                    </TouchableOpacity>
 
                     {error ? (
                         <Text style={styles.errorText}>{error}</Text>
@@ -164,7 +293,27 @@ const styles = StyleSheet.create({
     },
     avatarContainer: {
         alignItems: 'center',
-        marginBottom: 30,
+        marginBottom: 20,
+    },
+    avatarWrapper: {
+        width: 100,
+        height: 100,
+        borderRadius: 50,
+        backgroundColor: 'transparent',
+        overflow: 'hidden',
+        borderWidth: 2,
+        borderColor: '#FF4D00',
+    },
+    avatar: {
+        width: '100%',
+        height: '100%',
+        backgroundColor: 'transparent',
+    },
+    changePhotoText: {
+        color: '#FF4D00',
+        marginTop: 10,
+        fontSize: 16,
+        fontWeight: '500',
     },
     infoSection: {
         backgroundColor: 'rgba(0, 0, 0, 0.3)',

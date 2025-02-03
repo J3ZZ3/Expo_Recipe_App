@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "EXPO_RECIPE_APP",
-    "slug": "EXPO_RECIPE_APP",
+    "name": "Recipe Hub",
+    "slug": "recipe-hub",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -20,7 +20,7 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.arcane_jinx.EXPO_RECIPE_APP"
+      "package": "com.loganjesse.recipehub"
     },
     "web": {
       "bundler": "metro",
@@ -40,6 +40,10 @@
       "eas": {
         "projectId": "030b34b9-7b5c-48cd-8d11-e29a0acdd93c"
       }
-    }
+    },
+    "assets": [
+      "assets/images/*",
+      "assets/videos/*"
+    ]
   }
 }

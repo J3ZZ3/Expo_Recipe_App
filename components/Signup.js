@@ -1,5 +1,13 @@
 import React, { useState } from 'react';
-import { View, TextInput, StyleSheet, Text, TouchableOpacity, ImageBackground, ActivityIndicator } from 'react-native';
+import { 
+    View, 
+    TextInput, 
+    StyleSheet, 
+    Text, 
+    TouchableOpacity, 
+    ActivityIndicator,
+} from 'react-native';
+import { Video } from 'expo-av';
 import { useAuth } from '../hooks/useAuth';
 
 const Signup = ({ navigation }) => {
@@ -7,8 +15,8 @@ const Signup = ({ navigation }) => {
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [error, setError] = useState('');
-    const [loading, setLoading] = useState(false);
     const { signUp } = useAuth();
+    const [loading, setLoading] = useState(false);
 
     const handleSignup = async () => {
         try {
@@ -22,7 +30,6 @@ const Signup = ({ navigation }) => {
             }
             setLoading(true);
             await signUp(email, password);
-            // After successful signup, navigate to Login instead of auto-logging in
             navigation.navigate('Login', { 
                 message: 'Account created successfully! Please log in.' 
             });
@@ -34,11 +41,16 @@ const Signup = ({ navigation }) => {
     };
 
     return (
-        <ImageBackground
-            source={require('../assets/images/background.jpg')}
-            style={styles.background}
-        >
-            <View style={styles.container}>
+        <View style={styles.container}>
+            <Video
+                source={require('../assets/videos/signup.mp4')}
+                style={styles.backgroundVideo}
+                resizeMode="cover"
+                shouldPlay
+                isLooping
+                isMuted
+            />
+            <View style={styles.overlay}>
                 <Text style={styles.title}>Sign Up</Text>
                 <View style={styles.form}>
                     <TextInput
@@ -82,20 +94,26 @@ const Signup = ({ navigation }) => {
                     </TouchableOpacity>
                 </View>
             </View>
-        </ImageBackground>
+        </View>
     );
 };
 
 const styles = StyleSheet.create({
-    background: {
-        flex: 1,
-        resizeMode: 'cover',
-    },
     container: {
+        flex: 1,
+    },
+    backgroundVideo: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        bottom: 0,
+        right: 0,
+    },
+    overlay: {
         flex: 1,
         padding: 20,
         justifyContent: 'center',
-        backgroundColor: 'rgba(56, 48, 48, 0.41)',
+        backgroundColor: 'rgba(56, 48, 48, 0.6)',
     },
     title: {
         fontSize: 42,
@@ -124,9 +142,6 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         marginTop: 10,
     },
-    buttonDisabled: {
-        backgroundColor: 'rgba(255, 255, 255, 0.3)',
-    },
     buttonText: {
         color: 'white',
         fontSize: 18,
@@ -140,6 +155,9 @@ const styles = StyleSheet.create({
         color: 'white',
         textAlign: 'center',
         marginTop: 15,
+    },
+    buttonDisabled: {
+        backgroundColor: 'rgba(255, 255, 255, 0.3)',
     },
 });
 

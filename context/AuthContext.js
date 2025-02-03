@@ -1,4 +1,4 @@
-import React, { createContext, useState, useEffect } from 'react';
+import React, { createContext, useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabase';
 
 export const AuthContext = createContext();
@@ -6,20 +6,48 @@ export const AuthContext = createContext();
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
+    const mounted = useRef(true);
 
     useEffect(() => {
-        // Check active sessions and sets the user
-        supabase.auth.getSession().then(({ data: { session } }) => {
-            setUser(session?.user ?? null);
-            setLoading(false);
-        });
+        return () => {
+            mounted.current = false;
+        };
+    }, []);
 
-        // Listen for changes on auth state
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-            setUser(session?.user ?? null);
-        });
+    useEffect(() => {
+        let subscription;
 
-        return () => subscription.unsubscribe();
+        const initAuth = async () => {
+            try {
+                const { data: { session } } = await supabase.auth.getSession();
+                if (mounted.current) {
+                    setUser(session?.user ?? null);
+                    setLoading(false);
+                }
+
+                const { data: { subscription: sub } } = supabase.auth.onAuthStateChange(
+                    (_event, session) => {
+                        if (mounted.current) {
+                            setUser(session?.user ?? null);
+                        }
+                    }
+                );
+                subscription = sub;
+            } catch (error) {
+                console.error('Auth initialization error:', error);
+                if (mounted.current) {
+                    setLoading(false);
+                }
+            }
+        };
+
+        initAuth();
+
+        return () => {
+            if (subscription) {
+                subscription.unsubscribe();
+            }
+        };
     }, []);
 
     const signIn = async (email, password) => {
@@ -49,6 +77,7 @@ export const AuthProvider = ({ children }) => {
                         username: '',
                         full_name: '',
                         contact: '',
+                        avatar_url: '',
                         updated_at: new Date()
                     }
                 ]);

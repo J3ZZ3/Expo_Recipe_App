@@ -31,7 +31,6 @@ const Explore = ({ navigation }) => {
 
     useEffect(() => {
         if ((searchTerm || selectedCategory) && filteredRecipes.length === 0) {
-            // Animate the sad face
             Animated.sequence([
                 Animated.timing(sadFaceAnimation, {
                     toValue: 1,

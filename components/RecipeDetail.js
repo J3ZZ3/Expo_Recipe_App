@@ -39,7 +39,7 @@ const RecipeDetail = ({ route, navigation }) => {
 
     return (
         <ImageBackground
-            source={require('../assets/images/background.jpg')}
+            source={require('../assets/images/2.jpg')}
             style={styles.background}
         >
             <ScrollView style={styles.container}>

@@ -1,5 +1,13 @@
 import React, { useState } from 'react';
-import { View, TextInput, StyleSheet, Text, TouchableOpacity, ImageBackground, ActivityIndicator } from 'react-native';
+import { 
+    View, 
+    TextInput, 
+    StyleSheet, 
+    Text, 
+    TouchableOpacity, 
+    ActivityIndicator,
+} from 'react-native';
+import { Video } from 'expo-av';
 import { useAuth } from '../hooks/useAuth';
 
 const Login = ({ navigation, route }) => {
@@ -24,11 +32,16 @@ const Login = ({ navigation, route }) => {
     };
 
     return (
-        <ImageBackground
-            source={require('../assets/images/background.jpg')}
-            style={styles.background}
-        >
-            <View style={styles.container}>
+        <View style={styles.container}>
+            <Video
+                source={require('../assets/videos/login.mp4')}
+                style={styles.backgroundVideo}
+                resizeMode="cover"
+                shouldPlay
+                isLooping
+                isMuted
+            />
+            <View style={styles.overlay}>
                 <Text style={styles.title}>Recipe Hub</Text>
                 <View style={styles.form}>
                     {message ? <Text style={styles.success}>{message}</Text> : null}
@@ -65,20 +78,26 @@ const Login = ({ navigation, route }) => {
                     </TouchableOpacity>
                 </View>
             </View>
-        </ImageBackground>
+        </View>
     );
 };
 
 const styles = StyleSheet.create({
-    background: {
-        flex: 1,
-        resizeMode: 'cover',
-    },
     container: {
+        flex: 1,
+    },
+    backgroundVideo: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        bottom: 0,
+        right: 0,
+    },
+    overlay: {
         flex: 1,
         padding: 20,
         justifyContent: 'center',
-        backgroundColor: 'rgba(56, 48, 48, 0.41)',
+        backgroundColor: 'rgba(56, 48, 48, 0.6)',
     },
     title: {
         fontSize: 42,

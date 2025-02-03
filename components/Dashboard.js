@@ -13,7 +13,7 @@ import { Ionicons } from '@expo/vector-icons';
 const Dashboard = ({ navigation }) => {
     return (
         <ImageBackground
-            source={require('../assets/images/background.jpg')}
+            source={require('../assets/images/shvesta.jpg')}
             style={styles.background}
         >
             <ScrollView style={styles.container}>

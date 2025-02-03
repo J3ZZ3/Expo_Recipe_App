@@ -29,7 +29,7 @@ const AddRecipe = ({ navigation }) => {
 
     return (
         <ImageBackground
-            source={require('../assets/images/background.jpg')}
+            source={require('../assets/images/cotton.jpg')}
             style={styles.background}
         >
             <ScrollView style={styles.container}>
