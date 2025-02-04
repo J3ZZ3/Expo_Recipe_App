@@ -1,13 +1,37 @@
-import React, { memo } from 'react';
+import React, { memo, useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons'; // Import Ionicons for the profile icon
 import { useAuth } from '../hooks/useAuth';
 import { useRoute } from '@react-navigation/native';
+import { supabase } from '../lib/supabase';
 
-const Navbar = memo(({ onProfilePress, profileUrl }) => {
-    const { signOut } = useAuth();
+const Navbar = memo(({ onProfilePress }) => {
+    const { signOut, user } = useAuth();
     const route = useRoute();
     const isDashboard = route.name === 'Dashboard';
+    const [profileUrl, setProfileUrl] = useState(null);
+
+    // Add useEffect to fetch profile picture
+    useEffect(() => {
+        const fetchProfilePicture = async () => {
+            try {
+                if (user?.id) {
+                    const { data, error } = await supabase
+                        .from('profiles')
+                        .select('avatar_url')
+                        .eq('id', user.id)
+                        .single();
+                    
+                    if (error) throw error;
+                    setProfileUrl(data?.avatar_url);
+                }
+            } catch (error) {
+                console.error('Error fetching profile picture:', error);
+            }
+        };
+
+        fetchProfilePicture();
+    }, [user]);
 
     return (
         <View style={styles.container}>
@@ -24,8 +48,8 @@ const Navbar = memo(({ onProfilePress, profileUrl }) => {
                 ) : (
                     <TouchableOpacity 
                         onPress={onProfilePress}
-                        accessibilityRole="button"
                         style={styles.profileButton}
+                        accessibilityRole="button"
                     >
                         {profileUrl ? (
                             <View style={styles.profileImageWrapper}>
