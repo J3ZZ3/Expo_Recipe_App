@@ -24,6 +24,7 @@ export const RecipeProvider = ({ children }) => {
     });
     const [userRecipes, setUserRecipes] = useState([]);
     const [isOnline, setIsOnline] = useState(true);
+    const [favoriteRecipes, setFavoriteRecipes] = useState([]);
 
     const updateLoadingState = (key, value) => {
         setLoadingStates(prev => ({ ...prev, [key]: value }));
@@ -213,6 +214,66 @@ export const RecipeProvider = ({ children }) => {
         }
     };
 
+    // Add new function to toggle favorite status
+    const toggleFavorite = async (recipe) => {
+        try {
+            const { user } = await supabase.auth.getUser();
+            if (!user) throw new Error('User not authenticated');
+
+            const isFavorite = favoriteRecipes.some(fav => fav.recipe_id === recipe.idMeal);
+
+            if (isFavorite) {
+                // Remove from favorites
+                const { error } = await supabase
+                    .from('favorites')
+                    .delete()
+                    .eq('user_id', user.id)
+                    .eq('recipe_id', recipe.idMeal);
+
+                if (error) throw error;
+                setFavoriteRecipes(prev => prev.filter(fav => fav.recipe_id !== recipe.idMeal));
+            } else {
+                // Add to favorites
+                const { error } = await supabase
+                    .from('favorites')
+                    .insert([{
+                        user_id: user.id,
+                        recipe_id: recipe.idMeal,
+                        recipe_data: recipe
+                    }]);
+
+                if (error) throw error;
+                setFavoriteRecipes(prev => [...prev, { recipe_id: recipe.idMeal, recipe_data: recipe }]);
+            }
+        } catch (error) {
+            console.error('Error toggling favorite:', error);
+            throw error;
+        }
+    };
+
+    // Add function to fetch user's favorites
+    const fetchFavorites = async () => {
+        try {
+            const { user } = await supabase.auth.getUser();
+            if (!user) return;
+
+            const { data, error } = await supabase
+                .from('favorites')
+                .select('*')
+                .eq('user_id', user.id);
+
+            if (error) throw error;
+            setFavoriteRecipes(data);
+        } catch (error) {
+            console.error('Error fetching favorites:', error);
+        }
+    };
+
+    // Fetch favorites when component mounts
+    useEffect(() => {
+        fetchFavorites();
+    }, []);
+
     useEffect(() => {
         fetchRecipes();
     }, []);
@@ -237,6 +298,9 @@ export const RecipeProvider = ({ children }) => {
             userRecipes,
             isOnline,
             syncWithSupabase,
+            favoriteRecipes,
+            toggleFavorite,
+            fetchFavorites,
         }}>
             {children}
         </RecipeContext.Provider>

@@ -62,53 +62,6 @@ const Explore = ({ navigation }) => {
         filterRecipes(searchTerm, newCategory);
     };
 
-    const renderCategoryItem = (category) => (
-        <TouchableOpacity
-            style={[
-                styles.categoryButton,
-                selectedCategory === category.strCategory && styles.selectedCategory
-            ]}
-            onPress={() => handleCategoryPress(category.strCategory)}
-        >
-            <Text style={[
-                styles.categoryText,
-                selectedCategory === category.strCategory && styles.selectedCategoryText
-            ]}>
-                {category.strCategory}
-            </Text>
-        </TouchableOpacity>
-    );
-
-    const renderRecipeItem = (item) => (
-        <TouchableOpacity
-            style={styles.card}
-            onPress={() =>
-                navigation.navigate("RecipeDetail", { recipeId: item.idMeal })
-            }
-        >
-            <Image source={{ uri: item.strMealThumb }} style={styles.image} />
-            <Text style={styles.cardTitle}>{item.strMeal}</Text>
-        </TouchableOpacity>
-    );
-
-    const renderNoResults = () => (
-        <View style={styles.noResultsContainer}>
-            <Animated.View style={[
-                styles.sadFaceContainer,
-                {
-                    transform: [
-                        { scale: sadFaceAnimation }
-                    ]
-                }
-            ]}>
-                <Ionicons name="sad-outline" size={80} color="white" />
-            </Animated.View>
-            <Text style={styles.noResultsText}>
-                Unfortunately, we couldn't find what you're looking for
-            </Text>
-        </View>
-    );
-
     const displayedRecipes = (searchTerm || selectedCategory) ? filteredRecipes : recipes;
 
     if (loadingStates.recipes || loadingStates.categories) {
@@ -131,31 +84,63 @@ const Explore = ({ navigation }) => {
                 <Navbar onProfilePress={() => navigation.navigate('Dashboard')} />
                 <SearchBar onSearch={handleSearch} />
                 
-                <View style={styles.filterContainer}>
-                    <ScrollView 
-                        horizontal 
-                        showsHorizontalScrollIndicator={false}
-                        style={styles.categoryScroll}
-                    >
-                        {categories.map((category) => (
-                            <View key={category.idCategory} style={styles.categoryItem}>
-                                {renderCategoryItem(category)}
-                            </View>
-                        ))}
-                    </ScrollView>
-                </View>
+                <ScrollView 
+                    horizontal 
+                    showsHorizontalScrollIndicator={false}
+                    style={styles.categoryScroll}
+                >
+                    {categories.map((category) => (
+                        <View key={category.idCategory} style={styles.categoryItem}>
+                            <TouchableOpacity
+                                style={[
+                                    styles.categoryButton,
+                                    selectedCategory === category.strCategory && styles.selectedCategory
+                                ]}
+                                onPress={() => handleCategoryPress(category.strCategory)}
+                            >
+                                <Text style={[
+                                    styles.categoryText,
+                                    selectedCategory === category.strCategory && styles.selectedCategoryText
+                                ]}>
+                                    {category.strCategory}
+                                </Text>
+                            </TouchableOpacity>
+                        </View>
+                    ))}
+                </ScrollView>
 
                 <Text style={styles.title}>
                     {selectedCategory ? selectedCategory : 'All Recipes'}
                 </Text>
                 
                 {(searchTerm || selectedCategory) && filteredRecipes.length === 0 ? (
-                    renderNoResults()
+                    <View style={styles.noResultsContainer}>
+                        <Animated.View style={[
+                            styles.sadFaceContainer,
+                            { transform: [{ scale: sadFaceAnimation }] }
+                        ]}>
+                            <Ionicons name="sad-outline" size={80} color="white" />
+                        </Animated.View>
+                        <Text style={styles.noResultsText}>
+                            Unfortunately, we couldn't find what you're looking for
+                        </Text>
+                    </View>
                 ) : (
                     <FlatList
                         data={displayedRecipes}
                         keyExtractor={(item) => item.idMeal}
-                        renderItem={({ item }) => renderRecipeItem(item)}
+                        renderItem={({ item }) => (
+                            <TouchableOpacity
+                                style={styles.card}
+                                onPress={() => navigation.navigate("RecipeDetail", { recipeId: item.idMeal })}
+                            >
+                                <Image 
+                                    source={{ uri: item.strMealThumb }} 
+                                    style={styles.image}
+                                />
+                                <Text style={styles.cardTitle}>{item.strMeal}</Text>
+                            </TouchableOpacity>
+                        )}
                         numColumns={2}
                         showsVerticalScrollIndicator={false}
                         contentContainerStyle={styles.recipeGrid}

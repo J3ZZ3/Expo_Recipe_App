@@ -1,4 +1,4 @@
-import React, { useContext } from "react";
+import React, { useContext, useCallback, memo } from "react";
 import {
   View,
   Text,
@@ -8,15 +8,42 @@ import {
   TouchableOpacity,
   ScrollView,
   ImageBackground,
-  ActivityIndicator,
+  Platform,
 } from "react-native";
 import { RecipeContext } from "../context/RecipeContext";
 import Navbar from './Navbar';
 import { Ionicons } from '@expo/vector-icons';
 import LoadingSpinner from './LoadingSpinner';
 
+// Memoize the recipe item component for better performance
+const RecipeItem = memo(({ item, onPress }) => (
+  <TouchableOpacity
+    style={styles.card}
+    onPress={onPress}
+    android_ripple={{ color: 'rgba(255, 255, 255, 0.1)' }}
+  >
+    <Image 
+      source={{ uri: item.strMealThumb }} 
+      style={styles.image}
+      loading="lazy"
+    />
+    <Text style={styles.cardTitle}>{item.strMeal}</Text>
+  </TouchableOpacity>
+));
+
 const RecipeList = ({ navigation }) => {
   const { recipes, error, loadingStates, randomRecipe } = useContext(RecipeContext);
+
+  // Memoize the render function
+  const renderRecipeItem = useCallback(({ item }) => (
+    <RecipeItem
+      item={item}
+      onPress={() => navigation.navigate("RecipeDetail", { recipeId: item.idMeal })}
+    />
+  ), [navigation]);
+
+  // Memoize the keyExtractor
+  const keyExtractor = useCallback((item) => item.idMeal, []);
 
   if (loadingStates.recipes) {
     return (
@@ -36,6 +63,7 @@ const RecipeList = ({ navigation }) => {
         <TouchableOpacity 
           style={styles.retryButton}
           onPress={() => navigation.replace('RecipeList')}
+          android_ripple={{ color: 'rgba(255, 77, 0, 0.2)' }}
         >
           <Text style={styles.retryButtonText}>Retry</Text>
         </TouchableOpacity>
@@ -43,29 +71,21 @@ const RecipeList = ({ navigation }) => {
     );
   }
 
-  const renderRecipeItem = (item) => (
-    <TouchableOpacity
-      style={styles.card}
-      onPress={() =>
-        navigation.navigate("RecipeDetail", { recipeId: item.idMeal })
-      }
-    >
-      <Image source={{ uri: item.strMealThumb }} style={styles.image} />
-      <Text style={styles.cardTitle}>{item.strMeal}</Text>
-    </TouchableOpacity>
-  );
-
   return (
     <ImageBackground
       source={require('../assets/images/background.jpg')}
       style={styles.background}
     >
-      <ScrollView style={styles.container}>
+      <ScrollView 
+        style={styles.container}
+        removeClippedSubviews={Platform.OS === 'android'}
+      >
         <Navbar onProfilePress={() => navigation.navigate('Dashboard')} />
         
         <TouchableOpacity 
           style={styles.exploreButton}
           onPress={() => navigation.navigate('Explore')}
+          android_ripple={{ color: 'rgba(255, 255, 255, 0.2)' }}
         >
           <Text style={styles.exploreButtonText}>Explore All Recipes</Text>
         </TouchableOpacity>
@@ -75,10 +95,19 @@ const RecipeList = ({ navigation }) => {
             <Text style={styles.sectionTitle}>Recommended Recipes</Text>
             <FlatList
               data={recipes.slice(0, 10)}
-              keyExtractor={(item) => item.idMeal}
-              renderItem={({ item }) => renderRecipeItem(item)}
+              keyExtractor={keyExtractor}
+              renderItem={renderRecipeItem}
               horizontal
               showsHorizontalScrollIndicator={false}
+              removeClippedSubviews={Platform.OS === 'android'}
+              windowSize={5}
+              maxToRenderPerBatch={5}
+              initialNumToRender={5}
+              getItemLayout={(data, index) => ({
+                length: 140,
+                offset: 140 * index,
+                index,
+              })}
             />
 
             {randomRecipe && (
@@ -86,11 +115,14 @@ const RecipeList = ({ navigation }) => {
                 <Text style={styles.sectionTitle}>Recipe of the Week</Text>
                 <TouchableOpacity
                   style={styles.banner}
-                  onPress={() =>
-                    navigation.navigate("RecipeDetail", { recipeId: randomRecipe.idMeal })
-                  }
+                  onPress={() => navigation.navigate("RecipeDetail", { recipeId: randomRecipe.idMeal })}
+                  android_ripple={{ color: 'rgba(255, 255, 255, 0.1)' }}
                 >
-                  <Image source={{ uri: randomRecipe.strMealThumb }} style={styles.bannerImage} />
+                  <Image 
+                    source={{ uri: randomRecipe.strMealThumb }} 
+                    style={styles.bannerImage}
+                    loading="lazy"
+                  />
                   <Text style={styles.bannerTitle}>{randomRecipe.strMeal}</Text>
                 </TouchableOpacity>
               </>
@@ -99,19 +131,37 @@ const RecipeList = ({ navigation }) => {
             <Text style={styles.sectionTitle}>Recent Recipes</Text>
             <FlatList
               data={recipes.slice(10, 20)}
-              keyExtractor={(item) => item.idMeal}
-              renderItem={({ item }) => renderRecipeItem(item)}
+              keyExtractor={keyExtractor}
+              renderItem={renderRecipeItem}
               horizontal
               showsHorizontalScrollIndicator={false}
+              removeClippedSubviews={Platform.OS === 'android'}
+              windowSize={5}
+              maxToRenderPerBatch={5}
+              initialNumToRender={5}
+              getItemLayout={(data, index) => ({
+                length: 140,
+                offset: 140 * index,
+                index,
+              })}
             />
 
             <Text style={styles.sectionTitle}>Regional Recipes</Text>
             <FlatList
               data={recipes.slice(20, 30)}
-              keyExtractor={(item) => item.idMeal}
-              renderItem={({ item }) => renderRecipeItem(item)}
+              keyExtractor={keyExtractor}
+              renderItem={renderRecipeItem}
               horizontal
               showsHorizontalScrollIndicator={false}
+              removeClippedSubviews={Platform.OS === 'android'}
+              windowSize={5}
+              maxToRenderPerBatch={5}
+              initialNumToRender={5}
+              getItemLayout={(data, index) => ({
+                length: 140,
+                offset: 140 * index,
+                index,
+              })}
             />
           </>
         ) : (
@@ -150,14 +200,18 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     backgroundColor: "transparent",
     alignItems: "center",
-    elevation: 3,
-
+    elevation: Platform.OS === 'android' ? 3 : 0,
+    overflow: Platform.OS === 'android' ? 'hidden' : 'visible',
   },
   image: {
     width: 120,
     height: 120,
-    borderTopLeftRadius: 10,
-    borderTopRightRadius: 10,
+    borderRadius: 10,
+    ...Platform.select({
+      android: {
+        backgroundColor: '#f0f0f0',
+      },
+    }),
   },
   banner: {
     marginVertical: 20,
@@ -243,4 +297,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default RecipeList;
+export default memo(RecipeList);

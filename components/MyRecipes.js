@@ -14,12 +14,15 @@ import { useAuth } from '../hooks/useAuth';
 import Navbar from './Navbar';
 import { Ionicons } from '@expo/vector-icons';
 import LoadingSpinner from './LoadingSpinner';
+import { RecipeContext } from '../context/RecipeContext';
 
 const MyRecipes = ({ navigation }) => {
     const [recipes, setRecipes] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const { user } = useAuth();
+    const { favoriteRecipes } = useContext(RecipeContext);
+    const [activeTab, setActiveTab] = useState('my');
 
     const fetchUserRecipes = async () => {
         try {
@@ -52,14 +55,28 @@ const MyRecipes = ({ navigation }) => {
             })}
         >
             <Image 
-                source={{ uri: item.image_url }} 
+                source={item.image_url ? { uri: item.image_url } : require('../assets/images/rd_bg.jpg')} 
                 style={styles.image}
-                defaultSource={require('../assets/images/rd_bg.jpg')}
             />
             <Text style={styles.cardTitle}>{item.name}</Text>
             <Text style={styles.categoryText}>{item.category}</Text>
         </TouchableOpacity>
     );
+
+    const renderEmptyState = () => (
+        <View style={styles.emptyContainer}>
+            <Ionicons name="restaurant-outline" size={60} color="white" />
+            <Text style={styles.emptyText}>You haven't added any recipes yet</Text>
+            <TouchableOpacity 
+                style={styles.addButton}
+                onPress={() => navigation.navigate('AddRecipe')}
+            >
+                <Text style={styles.addButtonText}>Add Your First Recipe</Text>
+            </TouchableOpacity>
+        </View>
+    );
+
+    const displayedRecipes = activeTab === 'my' ? recipes : favoriteRecipes.map(fav => fav.recipe_data);
 
     if (loading) {
         return (
@@ -80,23 +97,33 @@ const MyRecipes = ({ navigation }) => {
             <View style={styles.container}>
                 <Navbar onProfilePress={() => navigation.navigate('Dashboard')} />
                 <Text style={styles.title}>My Recipes</Text>
+                
+                <View style={styles.tabContainer}>
+                    <TouchableOpacity 
+                        style={[styles.tab, activeTab === 'my' && styles.activeTab]}
+                        onPress={() => setActiveTab('my')}
+                    >
+                        <Text style={[styles.tabText, activeTab === 'my' && styles.activeTabText]}>
+                            My Recipes
+                        </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity 
+                        style={[styles.tab, activeTab === 'favorites' && styles.activeTab]}
+                        onPress={() => setActiveTab('favorites')}
+                    >
+                        <Text style={[styles.tabText, activeTab === 'favorites' && styles.activeTabText]}>
+                            Favorites
+                        </Text>
+                    </TouchableOpacity>
+                </View>
 
                 {error && <Text style={styles.errorText}>{error}</Text>}
 
-                {recipes.length === 0 ? (
-                    <View style={styles.emptyContainer}>
-                        <Ionicons name="restaurant-outline" size={60} color="white" />
-                        <Text style={styles.emptyText}>You haven't added any recipes yet</Text>
-                        <TouchableOpacity 
-                            style={styles.addButton}
-                            onPress={() => navigation.navigate('AddRecipe')}
-                        >
-                            <Text style={styles.addButtonText}>Add Your First Recipe</Text>
-                        </TouchableOpacity>
-                    </View>
+                {displayedRecipes.length === 0 ? (
+                    renderEmptyState()
                 ) : (
                     <FlatList
-                        data={recipes}
+                        data={displayedRecipes}
                         renderItem={renderRecipeItem}
                         keyExtractor={item => item.id}
                         numColumns={2}
@@ -104,7 +131,7 @@ const MyRecipes = ({ navigation }) => {
                     />
                 )}
 
-                <TouchableOpacity 
+                <TouchableOpacity
                     style={styles.fab}
                     onPress={() => navigation.navigate('AddRecipe')}
                 >
@@ -203,6 +230,27 @@ const styles = StyleSheet.create({
     },
     recipeGrid: {
         paddingBottom: 80,
+    },
+    tabContainer: {
+        flexDirection: 'row',
+        marginBottom: 20,
+    },
+    tab: {
+        flex: 1,
+        paddingVertical: 10,
+        alignItems: 'center',
+    },
+    activeTab: {
+        borderBottomWidth: 2,
+        borderBottomColor: '#FF4D00',
+    },
+    tabText: {
+        color: 'white',
+        fontSize: 16,
+    },
+    activeTabText: {
+        color: '#FF4D00',
+        fontWeight: 'bold',
     },
 });
 

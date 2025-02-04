@@ -1,14 +1,8 @@
 import React, { useState } from 'react';
-import { 
-    View, 
-    TextInput, 
-    StyleSheet, 
-    Text, 
-    TouchableOpacity, 
-    ActivityIndicator,
-    ImageBackground 
-} from 'react-native';
+import { View, StyleSheet, Text, ImageBackground } from 'react-native';
 import { useAuth } from '../hooks/useAuth';
+import Button from './common/Button';
+import Input from './common/Input';
 
 const Login = ({ navigation, route }) => {
     const [email, setEmail] = useState('');
@@ -42,37 +36,30 @@ const Login = ({ navigation, route }) => {
                     <Text style={styles.title}>Recipe Hub</Text>
                     <View style={styles.form}>
                         {message ? <Text style={styles.success}>{message}</Text> : null}
-                        <TextInput
-                            style={styles.input}
-                            placeholder="Email"
-                            placeholderTextColor="rgba(255, 255, 255, 0.5)"
+                        <Input
                             value={email}
                             onChangeText={setEmail}
+                            placeholder="Email"
                             autoCapitalize="none"
                         />
-                        <TextInput
-                            style={styles.input}
-                            placeholder="Password"
-                            placeholderTextColor="rgba(255, 255, 255, 0.5)"
+                        <Input
                             value={password}
                             onChangeText={setPassword}
+                            placeholder="Password"
                             secureTextEntry
                         />
                         {error ? <Text style={styles.error}>{error}</Text> : null}
-                        <TouchableOpacity 
-                            style={[styles.button, loading && styles.buttonDisabled]}
+                        <Button
+                            title="Login"
                             onPress={handleLogin}
-                            disabled={loading}
-                        >
-                            {loading ? (
-                                <ActivityIndicator color="white" />
-                            ) : (
-                                <Text style={styles.buttonText}>Login</Text>
-                            )}
-                        </TouchableOpacity>
-                        <TouchableOpacity onPress={() => navigation.navigate('Signup')}>
-                            <Text style={styles.link}>Don't have an account? Sign up</Text>
-                        </TouchableOpacity>
+                            loading={loading}
+                        />
+                        <Button
+                            title="Don't have an account? Sign up"
+                            onPress={() => navigation.navigate('Signup')}
+                            style={styles.linkButton}
+                            textStyle={styles.linkText}
+                        />
                     </View>
                 </View>
             </ImageBackground>
@@ -107,41 +94,22 @@ const styles = StyleSheet.create({
         padding: 20,
         borderRadius: 15,
     },
-    input: {
-        backgroundColor: 'rgba(255, 255, 255, 0.1)',
-        borderRadius: 10,
-        padding: 15,
-        color: 'white',
-        fontSize: 16,
-        marginBottom: 15,
-    },
-    button: {
-        backgroundColor: '#FF4D00',
-        padding: 15,
-        borderRadius: 10,
-        alignItems: 'center',
-        marginTop: 10,
-    },
-    buttonText: {
-        color: 'white',
-        fontSize: 18,
-        fontWeight: 'bold',
-    },
     error: {
         color: '#ff4444',
         marginBottom: 10,
     },
-    link: {
-        color: 'white',
-        textAlign: 'center',
-        marginTop: 15,
-    },
-    buttonDisabled: {
-        backgroundColor: 'rgba(255, 255, 255, 0.3)',
-    },
     success: {
         color: '#4CAF50',
         marginBottom: 10,
+        textAlign: 'center',
+    },
+    linkButton: {
+        backgroundColor: 'transparent',
+        padding: 0,
+        marginTop: 15,
+    },
+    linkText: {
+        color: 'white',
         textAlign: 'center',
     },
 });

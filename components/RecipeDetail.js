@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useContext } from 'react';
-import { View, Text, StyleSheet, Image, Linking, ScrollView, TouchableOpacity, ImageBackground } from 'react-native';
+import { View, Text, StyleSheet, Image, Linking, ScrollView, TouchableOpacity, ImageBackground, Alert } from 'react-native';
 import { RecipeContext } from '../context/RecipeContext';
 import { Ionicons } from '@expo/vector-icons'; // Import the Ionicons icon set
 import Navbar from './Navbar';
@@ -7,8 +7,22 @@ import LoadingSpinner from './LoadingSpinner';
 
 const RecipeDetail = ({ route, navigation }) => {
     const { recipeId } = route.params; // Get the recipe ID from the route params
-    const { fetchRecipeDetails, loadingStates } = useContext(RecipeContext);
+    const { fetchRecipeDetails, loadingStates, favoriteRecipes, toggleFavorite } = useContext(RecipeContext);
     const [recipe, setRecipe] = useState(null);
+    const [isFavoriting, setIsFavoriting] = useState(false);
+
+    const isFavorite = favoriteRecipes.some(fav => fav.recipe_id === recipeId);
+
+    const handleToggleFavorite = async () => {
+        try {
+            setIsFavoriting(true);
+            await toggleFavorite(recipe);
+        } catch (error) {
+            Alert.alert('Error', error.message);
+        } finally {
+            setIsFavoriting(false);
+        }
+    };
 
     useEffect(() => {
         const getRecipeDetails = async () => {
@@ -45,9 +59,21 @@ const RecipeDetail = ({ route, navigation }) => {
             <ScrollView style={styles.container}>
                 <Navbar onProfilePress={() => navigation.navigate('Dashboard')} />
                 <View style={styles.contentContainer}>
+                    <View style={styles.headerContainer}>
+                        <Text style={styles.title}>{recipe.strMeal}</Text>
+                        <TouchableOpacity 
+                            onPress={handleToggleFavorite}
+                            disabled={isFavoriting}
+                            style={styles.favoriteButton}
+                        >
+                            <Ionicons 
+                                name={isFavorite ? "heart" : "heart-outline"} 
+                                size={30} 
+                                color={isFavorite ? "#FF4D00" : "white"} 
+                            />
+                        </TouchableOpacity>
+                    </View>
                     <Image source={{ uri: recipe.strMealThumb }} style={styles.image} />
-                    <Text style={styles.title}>{recipe.strMeal}</Text>
-
                     {recipe.strYoutube && (
                         <TouchableOpacity 
                             onPress={() => Linking.openURL(recipe.strYoutube)} 
@@ -143,6 +169,15 @@ const styles = StyleSheet.create({
         color: 'white',
         fontSize: 16,
         marginLeft: 10,
+    },
+    headerContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 15,
+    },
+    favoriteButton: {
+        padding: 10,
     },
 });
 
