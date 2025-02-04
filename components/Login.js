@@ -6,8 +6,8 @@ import {
     Text, 
     TouchableOpacity, 
     ActivityIndicator,
+    ImageBackground 
 } from 'react-native';
-import { Video } from 'expo-av';
 import { useAuth } from '../hooks/useAuth';
 
 const Login = ({ navigation, route }) => {
@@ -33,51 +33,49 @@ const Login = ({ navigation, route }) => {
 
     return (
         <View style={styles.container}>
-            <Video
-                source={require('../assets/videos/login.mp4')}
-                style={styles.backgroundVideo}
+            <ImageBackground
+                source={require('../assets/images/login.jpg')}
+                style={styles.backgroundImage}
                 resizeMode="cover"
-                shouldPlay
-                isLooping
-                isMuted
-            />
-            <View style={styles.overlay}>
-                <Text style={styles.title}>Recipe Hub</Text>
-                <View style={styles.form}>
-                    {message ? <Text style={styles.success}>{message}</Text> : null}
-                    <TextInput
-                        style={styles.input}
-                        placeholder="Email"
-                        placeholderTextColor="rgba(255, 255, 255, 0.5)"
-                        value={email}
-                        onChangeText={setEmail}
-                        autoCapitalize="none"
-                    />
-                    <TextInput
-                        style={styles.input}
-                        placeholder="Password"
-                        placeholderTextColor="rgba(255, 255, 255, 0.5)"
-                        value={password}
-                        onChangeText={setPassword}
-                        secureTextEntry
-                    />
-                    {error ? <Text style={styles.error}>{error}</Text> : null}
-                    <TouchableOpacity 
-                        style={[styles.button, loading && styles.buttonDisabled]}
-                        onPress={handleLogin}
-                        disabled={loading}
-                    >
-                        {loading ? (
-                            <ActivityIndicator color="white" />
-                        ) : (
-                            <Text style={styles.buttonText}>Login</Text>
-                        )}
-                    </TouchableOpacity>
-                    <TouchableOpacity onPress={() => navigation.navigate('Signup')}>
-                        <Text style={styles.link}>Don't have an account? Sign up</Text>
-                    </TouchableOpacity>
+            >
+                <View style={styles.overlay}>
+                    <Text style={styles.title}>Recipe Hub</Text>
+                    <View style={styles.form}>
+                        {message ? <Text style={styles.success}>{message}</Text> : null}
+                        <TextInput
+                            style={styles.input}
+                            placeholder="Email"
+                            placeholderTextColor="rgba(255, 255, 255, 0.5)"
+                            value={email}
+                            onChangeText={setEmail}
+                            autoCapitalize="none"
+                        />
+                        <TextInput
+                            style={styles.input}
+                            placeholder="Password"
+                            placeholderTextColor="rgba(255, 255, 255, 0.5)"
+                            value={password}
+                            onChangeText={setPassword}
+                            secureTextEntry
+                        />
+                        {error ? <Text style={styles.error}>{error}</Text> : null}
+                        <TouchableOpacity 
+                            style={[styles.button, loading && styles.buttonDisabled]}
+                            onPress={handleLogin}
+                            disabled={loading}
+                        >
+                            {loading ? (
+                                <ActivityIndicator color="white" />
+                            ) : (
+                                <Text style={styles.buttonText}>Login</Text>
+                            )}
+                        </TouchableOpacity>
+                        <TouchableOpacity onPress={() => navigation.navigate('Signup')}>
+                            <Text style={styles.link}>Don't have an account? Sign up</Text>
+                        </TouchableOpacity>
+                    </View>
                 </View>
-            </View>
+            </ImageBackground>
         </View>
     );
 };
@@ -86,12 +84,10 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
     },
-    backgroundVideo: {
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        bottom: 0,
-        right: 0,
+    backgroundImage: {
+        flex: 1,
+        width: '100%',
+        height: '100%',
     },
     overlay: {
         flex: 1,

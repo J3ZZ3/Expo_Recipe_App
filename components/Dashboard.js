@@ -23,6 +23,14 @@ const Dashboard = ({ navigation }) => {
                 <View style={styles.menuGrid}>
                     <TouchableOpacity 
                         style={styles.menuItem}
+                        onPress={() => navigation.navigate('MyRecipes')}
+                    >
+                        <Ionicons name="book" size={40} color="#FF4D00" />
+                        <Text style={styles.menuText}>My Recipes</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity 
+                        style={styles.menuItem}
                         onPress={() => navigation.navigate('AddRecipe')}
                     >
                         <Ionicons name="add-circle" size={40} color="#FF4D00" />

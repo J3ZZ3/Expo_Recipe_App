@@ -14,6 +14,7 @@ import Dashboard from '../components/Dashboard';
 import LoadingSpinner from '../components/LoadingSpinner';
 import Profile from '../components/Profile';
 import EditProfile from '../components/EditProfile';
+import MyRecipes from '../components/MyRecipes';
 
 const Stack = createStackNavigator();
 
@@ -29,6 +30,7 @@ const NavigationWrapper = () => {
             {user ? (
                 <>
                     <Stack.Screen name="RecipeList" component={RecipeList} />
+                    <Stack.Screen name="MyRecipes" component={MyRecipes} />
                     <Stack.Screen name="AddRecipe" component={AddRecipe} />
                     <Stack.Screen name="RecipeDetail" component={RecipeDetail} />
                     <Stack.Screen name="Explore" component={Explore} />

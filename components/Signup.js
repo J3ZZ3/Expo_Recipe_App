@@ -6,8 +6,8 @@ import {
     Text, 
     TouchableOpacity, 
     ActivityIndicator,
+    ImageBackground 
 } from 'react-native';
-import { Video } from 'expo-av';
 import { useAuth } from '../hooks/useAuth';
 
 const Signup = ({ navigation }) => {
@@ -42,58 +42,56 @@ const Signup = ({ navigation }) => {
 
     return (
         <View style={styles.container}>
-            <Video
-                source={require('../assets/videos/signup.mp4')}
-                style={styles.backgroundVideo}
+            <ImageBackground
+                source={require('../assets/images/signup.jpg')}
+                style={styles.backgroundImage}
                 resizeMode="cover"
-                shouldPlay
-                isLooping
-                isMuted
-            />
-            <View style={styles.overlay}>
-                <Text style={styles.title}>Sign Up</Text>
-                <View style={styles.form}>
-                    <TextInput
-                        style={styles.input}
-                        placeholder="Email"
-                        placeholderTextColor="rgba(255, 255, 255, 0.5)"
-                        value={email}
-                        onChangeText={setEmail}
-                        autoCapitalize="none"
-                    />
-                    <TextInput
-                        style={styles.input}
-                        placeholder="Password"
-                        placeholderTextColor="rgba(255, 255, 255, 0.5)"
-                        value={password}
-                        onChangeText={setPassword}
-                        secureTextEntry
-                    />
-                    <TextInput
-                        style={styles.input}
-                        placeholder="Confirm Password"
-                        placeholderTextColor="rgba(255, 255, 255, 0.5)"
-                        value={confirmPassword}
-                        onChangeText={setConfirmPassword}
-                        secureTextEntry
-                    />
-                    {error ? <Text style={styles.error}>{error}</Text> : null}
-                    <TouchableOpacity 
-                        style={[styles.button, loading && styles.buttonDisabled]}
-                        onPress={handleSignup}
-                        disabled={loading}
-                    >
-                        {loading ? (
-                            <ActivityIndicator color="white" />
-                        ) : (
-                            <Text style={styles.buttonText}>Sign Up</Text>
-                        )}
-                    </TouchableOpacity>
-                    <TouchableOpacity onPress={() => navigation.navigate('Login')}>
-                        <Text style={styles.link}>Already have an account? Log in</Text>
-                    </TouchableOpacity>
+            >
+                <View style={styles.overlay}>
+                    <Text style={styles.title}>Sign Up</Text>
+                    <View style={styles.form}>
+                        <TextInput
+                            style={styles.input}
+                            placeholder="Email"
+                            placeholderTextColor="rgba(255, 255, 255, 0.5)"
+                            value={email}
+                            onChangeText={setEmail}
+                            autoCapitalize="none"
+                        />
+                        <TextInput
+                            style={styles.input}
+                            placeholder="Password"
+                            placeholderTextColor="rgba(255, 255, 255, 0.5)"
+                            value={password}
+                            onChangeText={setPassword}
+                            secureTextEntry
+                        />
+                        <TextInput
+                            style={styles.input}
+                            placeholder="Confirm Password"
+                            placeholderTextColor="rgba(255, 255, 255, 0.5)"
+                            value={confirmPassword}
+                            onChangeText={setConfirmPassword}
+                            secureTextEntry
+                        />
+                        {error ? <Text style={styles.error}>{error}</Text> : null}
+                        <TouchableOpacity 
+                            style={[styles.button, loading && styles.buttonDisabled]}
+                            onPress={handleSignup}
+                            disabled={loading}
+                        >
+                            {loading ? (
+                                <ActivityIndicator color="white" />
+                            ) : (
+                                <Text style={styles.buttonText}>Sign Up</Text>
+                            )}
+                        </TouchableOpacity>
+                        <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+                            <Text style={styles.link}>Already have an account? Log in</Text>
+                        </TouchableOpacity>
+                    </View>
                 </View>
-            </View>
+            </ImageBackground>
         </View>
     );
 };
@@ -102,12 +100,10 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
     },
-    backgroundVideo: {
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        bottom: 0,
-        right: 0,
+    backgroundImage: {
+        flex: 1,
+        width: '100%',
+        height: '100%',
     },
     overlay: {
         flex: 1,

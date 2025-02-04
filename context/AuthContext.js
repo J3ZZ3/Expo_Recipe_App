@@ -1,5 +1,6 @@
 import React, { createContext, useState, useEffect, useRef } from 'react';
 import { supabase } from '../lib/supabase';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export const AuthContext = createContext();
 
@@ -9,46 +10,47 @@ export const AuthProvider = ({ children }) => {
     const mounted = useRef(true);
 
     useEffect(() => {
+        // Check for existing session on app start
+        checkUser();
+
+        // Subscribe to auth state changes
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+            if (mounted.current) {
+                setUser(session?.user ?? null);
+                setLoading(false);
+                
+                // Store session if exists, remove if not
+                if (session) {
+                    AsyncStorage.setItem('supabase.auth.token', JSON.stringify(session));
+                } else {
+                    AsyncStorage.removeItem('supabase.auth.token');
+                }
+            }
+        });
+
         return () => {
             mounted.current = false;
+            subscription?.unsubscribe();
         };
     }, []);
 
-    useEffect(() => {
-        let subscription;
-
-        const initAuth = async () => {
-            try {
-                const { data: { session } } = await supabase.auth.getSession();
-                if (mounted.current) {
-                    setUser(session?.user ?? null);
-                    setLoading(false);
-                }
-
-                const { data: { subscription: sub } } = supabase.auth.onAuthStateChange(
-                    (_event, session) => {
-                        if (mounted.current) {
-                            setUser(session?.user ?? null);
-                        }
-                    }
-                );
-                subscription = sub;
-            } catch (error) {
-                console.error('Auth initialization error:', error);
-                if (mounted.current) {
-                    setLoading(false);
+    const checkUser = async () => {
+        try {
+            // Check for existing session in AsyncStorage
+            const sessionStr = await AsyncStorage.getItem('supabase.auth.token');
+            if (sessionStr) {
+                const session = JSON.parse(sessionStr);
+                const { data: { user: currentUser } } = await supabase.auth.getUser(session.access_token);
+                if (currentUser) {
+                    setUser(currentUser);
                 }
             }
-        };
-
-        initAuth();
-
-        return () => {
-            if (subscription) {
-                subscription.unsubscribe();
-            }
-        };
-    }, []);
+        } catch (error) {
+            console.error('Error checking user session:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const signIn = async (email, password) => {
         const { data, error } = await supabase.auth.signInWithPassword({
@@ -66,7 +68,7 @@ export const AuthProvider = ({ children }) => {
         });
         if (error) throw error;
 
-        // Create initial profile
+        // Create user profile
         if (data.user) {
             const { error: profileError } = await supabase
                 .from('profiles')
@@ -88,12 +90,25 @@ export const AuthProvider = ({ children }) => {
     };
 
     const signOut = async () => {
-        const { error } = await supabase.auth.signOut();
-        if (error) throw error;
+        try {
+            const { error } = await supabase.auth.signOut();
+            if (error) throw error;
+            await AsyncStorage.removeItem('supabase.auth.token');
+            setUser(null);
+        } catch (error) {
+            console.error('Error signing out:', error);
+            throw error;
+        }
     };
 
     return (
-        <AuthContext.Provider value={{ user, loading, signIn, signUp, signOut }}>
+        <AuthContext.Provider value={{ 
+            user, 
+            loading, 
+            signIn, 
+            signUp, 
+            signOut 
+        }}>
             {children}
         </AuthContext.Provider>
     );

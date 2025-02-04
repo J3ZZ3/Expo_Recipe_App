@@ -120,12 +120,6 @@ const RecipeList = ({ navigation }) => {
         
         <View style={styles.space} />
       </ScrollView>
-      <TouchableOpacity 
-        style={styles.fab}
-        onPress={() => navigation.navigate('Dashboard')}
-      >
-        <Ionicons name="grid" size={30} color="white" />
-      </TouchableOpacity>
     </ImageBackground>
   );
 };

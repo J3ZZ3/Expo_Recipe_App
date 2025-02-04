@@ -6,25 +6,45 @@ import {
     Text, 
     TouchableOpacity, 
     ImageBackground,
-    ScrollView 
+    ScrollView,
+    Alert,
+    ActivityIndicator
 } from 'react-native';
 import { RecipeContext } from '../context/RecipeContext';
+import { useAuth } from '../hooks/useAuth';
 import Navbar from './Navbar';
 import { Ionicons } from '@expo/vector-icons';
 
 const AddRecipe = ({ navigation }) => {
-    const { addRecipe } = useContext(RecipeContext);
+    const { addRecipe, loadingStates } = useContext(RecipeContext);
+    const { user } = useAuth();
     const [recipeName, setRecipeName] = useState('');
+    const [category, setCategory] = useState('');
     const [ingredients, setIngredients] = useState('');
     const [instructions, setInstructions] = useState('');
+    const [imageUrl, setImageUrl] = useState('');
 
-    const handleAdd = () => {
-        addRecipe({ 
-            name: recipeName,
-            ingredients: ingredients,
-            instructions: instructions
-        });
-        navigation.goBack();
+    const handleAdd = async () => {
+        if (!recipeName || !ingredients || !instructions) {
+            Alert.alert('Error', 'Please fill in all required fields');
+            return;
+        }
+
+        try {
+            const newRecipe = {
+                name: recipeName,
+                category: category,
+                ingredients: ingredients.split('\n').filter(i => i.trim()),
+                instructions: instructions,
+                image_url: imageUrl || 'https://via.placeholder.com/300',
+                user_id: user.id
+            };
+
+            await addRecipe(newRecipe);
+            navigation.navigate('MyRecipes');
+        } catch (error) {
+            Alert.alert('Error', error.message);
+        }
     };
 
     return (
@@ -37,16 +57,10 @@ const AddRecipe = ({ navigation }) => {
                 
                 <View style={styles.titleContainer}>
                     <Text style={styles.title}>Add New Recipe</Text>
-                    <TouchableOpacity 
-                        onPress={() => navigation.navigate('Dashboard')}
-                        style={styles.trashButton}
-                    >
-                        <Ionicons name="trash-outline" size={28} color="white" />
-                    </TouchableOpacity>
                 </View>
 
                 <View style={styles.inputContainer}>
-                    <Text style={styles.label}>Recipe Name</Text>
+                    <Text style={styles.label}>Recipe Name *</Text>
                     <TextInput 
                         style={styles.input} 
                         placeholder="Enter recipe name" 
@@ -55,7 +69,25 @@ const AddRecipe = ({ navigation }) => {
                         onChangeText={setRecipeName}
                     />
 
-                    <Text style={styles.label}>Ingredients</Text>
+                    <Text style={styles.label}>Category</Text>
+                    <TextInput 
+                        style={styles.input} 
+                        placeholder="Enter category (e.g., Dessert, Main Course)" 
+                        placeholderTextColor="rgba(255, 255, 255, 0.5)"
+                        value={category} 
+                        onChangeText={setCategory}
+                    />
+
+                    <Text style={styles.label}>Image URL</Text>
+                    <TextInput 
+                        style={styles.input} 
+                        placeholder="Enter image URL (optional)" 
+                        placeholderTextColor="rgba(255, 255, 255, 0.5)"
+                        value={imageUrl} 
+                        onChangeText={setImageUrl}
+                    />
+
+                    <Text style={styles.label}>Ingredients *</Text>
                     <TextInput 
                         style={[styles.input, styles.multilineInput]} 
                         placeholder="Enter ingredients (one per line)" 
@@ -66,7 +98,7 @@ const AddRecipe = ({ navigation }) => {
                         numberOfLines={4}
                     />
 
-                    <Text style={styles.label}>Instructions</Text>
+                    <Text style={styles.label}>Instructions *</Text>
                     <TextInput 
                         style={[styles.input, styles.multilineInput]} 
                         placeholder="Enter cooking instructions" 
@@ -78,14 +110,19 @@ const AddRecipe = ({ navigation }) => {
                     />
 
                     <TouchableOpacity 
-                        style={styles.addButton}
+                        style={[styles.addButton, loadingStates.adding && styles.buttonDisabled]}
                         onPress={handleAdd}
+                        disabled={loadingStates.adding}
                     >
-                        <Ionicons name="add-circle" size={24} color="white" style={styles.buttonIcon} />
-                        <Text style={styles.buttonText}>Add Recipe</Text>
+                        {loadingStates.adding ? (
+                            <ActivityIndicator color="white" />
+                        ) : (
+                            <>
+                                <Ionicons name="add-circle" size={24} color="white" style={styles.buttonIcon} />
+                                <Text style={styles.buttonText}>Add Recipe</Text>
+                            </>
+                        )}
                     </TouchableOpacity>
-
-
                 </View>
             </ScrollView>
         </ImageBackground>
@@ -113,9 +150,6 @@ const styles = StyleSheet.create({
         fontSize: 24,
         fontWeight: 'bold',
         color: 'white',
-    },
-    trashButton: {
-        padding: 8,
     },
     inputContainer: {
         backgroundColor: 'rgba(0, 0, 0, 0.3)',
@@ -152,15 +186,6 @@ const styles = StyleSheet.create({
         borderRadius: 25,
         marginTop: 30,
     },
-    cancelButton: {
-        backgroundColor: '#FF0000',
-        flexDirection: 'row',
-        justifyContent: 'center',
-        alignItems: 'center',
-        padding: 15,
-        borderRadius: 25,
-        marginTop: 10,
-    },
     buttonText: {
         color: 'white',
         fontSize: 18,
@@ -170,7 +195,9 @@ const styles = StyleSheet.create({
     buttonIcon: {
         marginRight: 5,
     },
-
+    buttonDisabled: {
+        backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    },
 });
 
 export default AddRecipe;

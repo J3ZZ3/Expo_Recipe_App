@@ -1,5 +1,8 @@
 import React, { createContext, useState, useEffect } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { supabase } from '../lib/supabase';
 import axios from 'axios';
+import NetInfo from '@react-native-community/netinfo';
 
 export const RecipeContext = createContext();
 
@@ -19,6 +22,8 @@ export const RecipeProvider = ({ children }) => {
         updating: false,
         deleting: false,
     });
+    const [userRecipes, setUserRecipes] = useState([]);
+    const [isOnline, setIsOnline] = useState(true);
 
     const updateLoadingState = (key, value) => {
         setLoadingStates(prev => ({ ...prev, [key]: value }));
@@ -93,7 +98,32 @@ export const RecipeProvider = ({ children }) => {
     };
 
     const addRecipe = async (newRecipe) => {
-        // Implement the logic to add a recipe
+        try {
+            updateLoadingState('adding', true);
+
+            if (isOnline) {
+                const { data, error } = await supabase
+                    .from('recipes')
+                    .insert([newRecipe])
+                    .select()
+                    .single();
+
+                if (error) throw error;
+
+                setUserRecipes(prev => [data, ...prev]);
+                await AsyncStorage.setItem('userRecipes', JSON.stringify([data, ...userRecipes]));
+            } else {
+                // Store locally and sync later
+                const tempRecipe = { ...newRecipe, id: Date.now(), pendingSync: true };
+                setUserRecipes(prev => [tempRecipe, ...prev]);
+                await AsyncStorage.setItem('userRecipes', JSON.stringify([tempRecipe, ...userRecipes]));
+            }
+        } catch (error) {
+            console.error('Error adding recipe:', error);
+            throw error;
+        } finally {
+            updateLoadingState('adding', false);
+        }
     };
 
     const updateRecipe = async (id, updatedRecipe) => {
@@ -102,6 +132,85 @@ export const RecipeProvider = ({ children }) => {
 
     const deleteRecipe = async (id) => {
         // Implement the logic to delete a recipe
+    };
+
+    // Monitor network connectivity
+    useEffect(() => {
+        const unsubscribe = NetInfo.addEventListener(state => {
+            setIsOnline(state.isConnected);
+        });
+
+        return () => unsubscribe();
+    }, []);
+
+    // Load user recipes from local storage
+    useEffect(() => {
+        loadLocalUserRecipes();
+    }, []);
+
+    const loadLocalUserRecipes = async () => {
+        try {
+            const storedRecipes = await AsyncStorage.getItem('userRecipes');
+            if (storedRecipes) {
+                setUserRecipes(JSON.parse(storedRecipes));
+            }
+        } catch (error) {
+            console.error('Error loading local recipes:', error);
+        }
+    };
+
+    const syncWithSupabase = async () => {
+        if (!isOnline) return;
+
+        try {
+            const { data, error } = await supabase
+                .from('recipes')
+                .select('*')
+                .order('created_at', { ascending: false });
+
+            if (error) throw error;
+
+            setUserRecipes(data);
+            await AsyncStorage.setItem('userRecipes', JSON.stringify(data));
+        } catch (error) {
+            console.error('Error syncing with Supabase:', error);
+        }
+    };
+
+    // Sync pending recipes when back online
+    useEffect(() => {
+        if (isOnline) {
+            syncPendingRecipes();
+        }
+    }, [isOnline]);
+
+    const syncPendingRecipes = async () => {
+        const pendingRecipes = userRecipes.filter(recipe => recipe.pendingSync);
+        
+        for (const recipe of pendingRecipes) {
+            try {
+                const { data, error } = await supabase
+                    .from('recipes')
+                    .insert([{
+                        ...recipe,
+                        pendingSync: undefined,
+                        id: undefined
+                    }])
+                    .select()
+                    .single();
+
+                if (error) throw error;
+
+                // Update local storage with synced recipe
+                const updatedRecipes = userRecipes.map(r => 
+                    r.id === recipe.id ? data : r
+                );
+                setUserRecipes(updatedRecipes);
+                await AsyncStorage.setItem('userRecipes', JSON.stringify(updatedRecipes));
+            } catch (error) {
+                console.error('Error syncing pending recipe:', error);
+            }
+        }
     };
 
     useEffect(() => {
@@ -125,6 +234,9 @@ export const RecipeProvider = ({ children }) => {
             setSelectedCategory,
             filterRecipes,
             loadingStates,
+            userRecipes,
+            isOnline,
+            syncWithSupabase,
         }}>
             {children}
         </RecipeContext.Provider>
