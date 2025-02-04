@@ -3,6 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../lib/supabase';
 import axios from 'axios';
 import NetInfo from '@react-native-community/netinfo';
+import { useAuth } from '../hooks/useAuth';
 
 export const RecipeContext = createContext();
 
@@ -25,6 +26,7 @@ export const RecipeProvider = ({ children }) => {
     const [userRecipes, setUserRecipes] = useState([]);
     const [isOnline, setIsOnline] = useState(true);
     const [favoriteRecipes, setFavoriteRecipes] = useState([]);
+    const { user } = useAuth();
 
     const updateLoadingState = (key, value) => {
         setLoadingStates(prev => ({ ...prev, [key]: value }));
@@ -214,36 +216,70 @@ export const RecipeProvider = ({ children }) => {
         }
     };
 
-    // Add new function to toggle favorite status
+    // Update toggleFavorite function
     const toggleFavorite = async (recipe) => {
         try {
-            const { user } = await supabase.auth.getUser();
-            if (!user) throw new Error('User not authenticated');
-
-            const isFavorite = favoriteRecipes.some(fav => fav.recipe_id === recipe.idMeal);
-
+            if (!user) throw new Error('User must be logged in');
+            
+            // Normalize recipe ID - handle both MealDB and custom recipes
+            const recipeId = recipe.idMeal || recipe.id;
+            
+            // Check if recipe is already favorited
+            const isFavorite = favoriteRecipes.some(fav => 
+                fav.recipe_id === recipeId || 
+                fav.recipe_id === recipe.idMeal
+            );
+            
             if (isFavorite) {
                 // Remove from favorites
                 const { error } = await supabase
                     .from('favorites')
                     .delete()
                     .eq('user_id', user.id)
-                    .eq('recipe_id', recipe.idMeal);
+                    .eq('recipe_id', recipeId);
 
                 if (error) throw error;
-                setFavoriteRecipes(prev => prev.filter(fav => fav.recipe_id !== recipe.idMeal));
+                
+                setFavoriteRecipes(prev => 
+                    prev.filter(fav => fav.recipe_id !== recipeId)
+                );
             } else {
+                // Normalize recipe data structure
+                const normalizedRecipe = {
+                    id: recipeId,
+                    name: recipe.strMeal || recipe.name,
+                    category: recipe.strCategory || recipe.category,
+                    instructions: recipe.strInstructions || recipe.instructions,
+                    image_url: recipe.strMealThumb || recipe.image_url,
+                    ingredients: recipe.ingredients || 
+                        Object.keys(recipe)
+                            .filter(key => key.startsWith('strIngredient') && recipe[key])
+                            .map((key, index) => ({
+                                ingredient: recipe[key],
+                                measure: recipe[`strMeasure${index + 1}`]
+                            })),
+                    source: recipe.idMeal ? 'mealdb' : 'custom',
+                    original_data: recipe
+                };
+
                 // Add to favorites
                 const { error } = await supabase
                     .from('favorites')
-                    .insert([{
+                    .insert({
                         user_id: user.id,
-                        recipe_id: recipe.idMeal,
-                        recipe_data: recipe
-                    }]);
+                        recipe_id: recipeId,
+                        recipe_data: normalizedRecipe,
+                        created_at: new Date().toISOString()
+                    });
 
                 if (error) throw error;
-                setFavoriteRecipes(prev => [...prev, { recipe_id: recipe.idMeal, recipe_data: recipe }]);
+                
+                setFavoriteRecipes(prev => [...prev, {
+                    user_id: user.id,
+                    recipe_id: recipeId,
+                    recipe_data: normalizedRecipe,
+                    created_at: new Date().toISOString()
+                }]);
             }
         } catch (error) {
             console.error('Error toggling favorite:', error);
@@ -251,28 +287,48 @@ export const RecipeProvider = ({ children }) => {
         }
     };
 
-    // Add function to fetch user's favorites
+    // Update fetchFavorites function
     const fetchFavorites = async () => {
         try {
-            const { user } = await supabase.auth.getUser();
+            setLoadingStates(prev => ({ ...prev, loading: true }));
             if (!user) return;
 
             const { data, error } = await supabase
                 .from('favorites')
                 .select('*')
-                .eq('user_id', user.id);
+                .eq('user_id', user.id)
+                .order('created_at', { ascending: false });
 
             if (error) throw error;
-            setFavoriteRecipes(data);
+            
+            // Normalize the fetched favorites data
+            const normalizedFavorites = (data || []).map(favorite => ({
+                ...favorite,
+                recipe_data: {
+                    ...favorite.recipe_data,
+                    id: favorite.recipe_id,
+                    // Ensure consistent property access
+                    name: favorite.recipe_data.name || favorite.recipe_data.strMeal,
+                    image_url: favorite.recipe_data.image_url || favorite.recipe_data.strMealThumb
+                }
+            }));
+
+            setFavoriteRecipes(normalizedFavorites);
         } catch (error) {
             console.error('Error fetching favorites:', error);
+        } finally {
+            setLoadingStates(prev => ({ ...prev, loading: false }));
         }
     };
 
-    // Fetch favorites when component mounts
+    // Add useEffect to fetch favorites when user changes
     useEffect(() => {
-        fetchFavorites();
-    }, []);
+        if (user) {
+            fetchFavorites();
+        } else {
+            setFavoriteRecipes([]);
+        }
+    }, [user]);
 
     useEffect(() => {
         fetchRecipes();
