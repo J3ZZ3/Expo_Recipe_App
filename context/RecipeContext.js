@@ -216,7 +216,7 @@ export const RecipeProvider = ({ children }) => {
         }
     };
 
-    // Update toggleFavorite function
+    // toggleFavorite function
     const toggleFavorite = async (recipe) => {
         try {
             if (!user) throw new Error('User must be logged in');
